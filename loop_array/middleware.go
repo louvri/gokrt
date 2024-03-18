@@ -24,6 +24,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							}
 							wg.Done()
 						}()
+						wg.Wait()
 					} else if arr, ok := resp.([]interface{}); ok {
 						var wg sync.WaitGroup
 						wg.Add(1)
@@ -33,6 +34,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							}
 							wg.Done()
 						}()
+						wg.Wait()
 					}
 				}
 				return resp, nil
