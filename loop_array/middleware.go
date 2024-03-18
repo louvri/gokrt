@@ -1,4 +1,4 @@
-package array
+package loop_array
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package next
+package loop_next
 
 import (
 	"context"
