@@ -2,6 +2,7 @@ package alter
 
 import (
 	"context"
+	"sync"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -16,8 +17,14 @@ func Middleware(
 			if original != nil || err != nil {
 				result := preprocessor(original, err)
 				if result != nil {
+					var wg sync.WaitGroup
 					var altered interface{}
-					altered, err = e(ctx, result)
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						altered, err = e(ctx, result)
+					}()
+					wg.Wait()
 					return postprocessor(original, altered, err)
 				} else {
 					return nil, nil

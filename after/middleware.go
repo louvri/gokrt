@@ -2,6 +2,7 @@ package after
 
 import (
 	"context"
+	"sync"
 
 	"github.com/go-kit/kit/endpoint"
 )
@@ -14,7 +15,13 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err err
 
 				result := preprocessor(resp, err)
 				if result != nil {
-					e(ctx, result)
+					var wg sync.WaitGroup
+					wg.Add(1)
+					go func() {
+						e(ctx, result)
+						wg.Done()
+					}()
+					wg.Wait()
 				}
 
 			}
