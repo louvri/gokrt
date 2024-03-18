@@ -7,16 +7,16 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/louvri/gokrt/after_async"
+	"github.com/louvri/gokrt/after"
 )
 
 type key int
 
 var test key = 1
 
-func TestAfterAsync(t *testing.T) {
+func TestAfter(t *testing.T) {
 	ctx := context.WithValue(context.Background(), test, 1)
-	response, err := endpoint.Chain(after_async.Middleware(
+	response, err := endpoint.Chain(after.Middleware(
 		func(ctx context.Context, req interface{}) (interface{}, error) {
 			fmt.Printf("HELLOOO %v\n", ctx.Value(test))
 			fmt.Println(req)
