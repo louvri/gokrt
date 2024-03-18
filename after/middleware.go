@@ -12,7 +12,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err err
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			resp, err := next(ctx, req)
 			if resp != nil || err != nil {
-
 				result := preprocessor(resp, err)
 				if result != nil {
 					var wg sync.WaitGroup
@@ -23,7 +22,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err err
 					}()
 					wg.Wait()
 				}
-
 			}
 			return resp, err
 		}
