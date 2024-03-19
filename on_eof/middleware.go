@@ -18,6 +18,8 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 					})
 				}
 				return next(ctx, req)
+			} else if eof != nil && eof == "err" {
+				return nil, nil
 			}
 			return next(ctx, req)
 		}

@@ -35,7 +35,7 @@ func Middleware(
 						ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
 						curr, err = next(ctx, modifiedReq)
 						if !ignoreError && err != nil {
-							ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+							ctx = context.WithValue(ctx, sys_key.EOF, "err")
 							next(ctx, nil)
 							wg.Done()
 							return

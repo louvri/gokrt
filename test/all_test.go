@@ -68,3 +68,29 @@ func TestOnEof(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 }
+func TestOnEofWhileError(t *testing.T) {
+	ctx := context.WithValue(context.Background(), sys_key.EOF, "err")
+	response, err := endpoint.Chain(
+		on_eof.Middleware(
+			alter.Middleware(
+				func(ctx context.Context, req interface{}) (interface{}, error) {
+					return "hello world", nil
+				},
+				func(data interface{}, err error) interface{} {
+					return data
+				},
+				func(data1, data2 interface{}, err error) (interface{}, error) {
+					return data2, nil
+				},
+			),
+		),
+	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "satu", nil
+	})(ctx, -1)
+	if response.(string) == "hello world" {
+		t.Fatal("wrong result")
+	}
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
