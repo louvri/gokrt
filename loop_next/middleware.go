@@ -2,7 +2,7 @@ package loop_next
 
 import (
 	"context"
-	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
@@ -20,24 +20,32 @@ func Middleware(
 			if eof != nil && eof == "eof" {
 				return next(ctx, nil)
 			} else {
+				var wg sync.WaitGroup
+				wg.Add(1)
 				var err error
-				var prev, curr interface{}
-				curr = make([]map[string]interface{}, 0)
-				modifiedReq := req
-				ctx = context.WithValue(ctx, sys_key.SOF, true)
-				for !comparator(prev, curr) {
-					modifiedReq := modifier(modifiedReq, curr)
-					prev = curr
-					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
-					curr, err = next(ctx, modifiedReq)
-					if !ignoreError && err != nil {
-						ctx = context.WithValue(ctx, sys_key.EOF, "eof")
-						next(ctx, nil)
-						return nil, fmt.Errorf("%s:%s", "loop_middleware:", err.Error())
+				go func() {
+					var err error
+					var prev, curr interface{}
+					curr = make([]map[string]interface{}, 0)
+					modifiedReq := req
+					ctx = context.WithValue(ctx, sys_key.SOF, true)
+					for !comparator(prev, curr) {
+						modifiedReq := modifier(modifiedReq, curr)
+						prev = curr
+						ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
+						curr, err = next(ctx, modifiedReq)
+						if !ignoreError && err != nil {
+							ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+							next(ctx, nil)
+							wg.Done()
+							return
+						}
+						ctx = context.WithValue(ctx, sys_key.SOF, false)
+						time.Sleep(0)
 					}
-					ctx = context.WithValue(ctx, sys_key.SOF, false)
-					time.Sleep(0)
-				}
+					wg.Done()
+				}()
+				wg.Wait()
 				ctx = context.WithValue(ctx, sys_key.EOF, "eof")
 				if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
 					return nil, eofErr
