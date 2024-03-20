@@ -77,6 +77,8 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			lineNumber := 1
 			for scanner.Scan() {
 				text := scanner.Text()
+				text = strings.ReplaceAll(text, "\ufeff", "")
+				text = strings.TrimSpace(text)
 				if first {
 					columns = strings.Split(text, ";")
 					first = false
