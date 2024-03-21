@@ -48,6 +48,7 @@ func New(bucket, name string, credential string, kind FileType) (connection.Conn
 		bucket: bucket,
 		name:   name,
 		client: client,
+		kind:   kind,
 	}, nil
 }
 func (f *File) Connect(ctx context.Context) error {
