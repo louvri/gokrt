@@ -40,6 +40,7 @@ func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Mid
 				if fileObject, ok = ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); !ok {
 					fileObject = make(map[string]interface{})
 				}
+				fileObject[name] = con
 				ctx = context.WithValue(ctx, sys_key.FILE_OBJECT_KEY, fileObject)
 				return next(ctx, req)
 			}
