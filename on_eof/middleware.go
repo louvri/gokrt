@@ -12,10 +12,11 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof == "eof" {
+				next = func(ctx context.Context, req interface{}) (interface{}, error) {
+					return "", nil
+				}
 				for i := len(middlewares) - 1; i >= 0; i-- { // reverse
-					next = middlewares[i](func(ctx context.Context, req interface{}) (interface{}, error) {
-						return "", nil
-					})
+					next = middlewares[i](next)
 				}
 				return next(ctx, req)
 			} else if eof != nil && eof == "err" {

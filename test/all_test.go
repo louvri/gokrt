@@ -48,7 +48,7 @@ func TestOnEof(t *testing.T) {
 		on_eof.Middleware(
 			alter.Middleware(
 				func(ctx context.Context, req interface{}) (interface{}, error) {
-					return "hello world", nil
+					return "hello world 1", nil
 				},
 				func(data interface{}, err error) interface{} {
 					return data
@@ -57,11 +57,19 @@ func TestOnEof(t *testing.T) {
 					return data2, nil
 				},
 			),
+			after.Middleware(
+				func(ctx context.Context, req interface{}) (interface{}, error) {
+					return "hello world 2", nil
+				},
+				func(data interface{}, err error) interface{} {
+					return data
+				},
+			),
 		),
 	)(func(ctx context.Context, req interface{}) (interface{}, error) {
 		return "satu", nil
 	})(ctx, -1)
-	if response.(string) != "hello world" {
+	if response.(string) != "hello world 1" {
 		t.Fatal("wrong result")
 	}
 	if err != nil {
