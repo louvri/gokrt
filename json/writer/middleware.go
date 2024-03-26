@@ -49,7 +49,11 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				tobeRendered = tmp
 			}
 			for _, data := range tobeRendered {
-				if tmp, err := json.Marshal(data); err != nil {
+				filtered := make(map[string]interface{})
+				for _, key := range columns {
+					filtered[key] = data[key]
+				}
+				if tmp, err := json.Marshal(filtered); err != nil {
 					return nil, err
 				} else {
 					if _, err = writer.WriteString(string(tmp)); err != nil {
