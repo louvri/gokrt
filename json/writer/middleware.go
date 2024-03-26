@@ -3,10 +3,9 @@ package writer
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
-	"strings"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/connection"
@@ -25,15 +24,22 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				}
 				return response, responseError
 			}
-			eof := ctx.Value(sys_key.EOF)
-			if eof != nil && eof != "" {
-				return response, responseError
-			}
 			var writer *bufio.Writer
 			if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil {
 				writer = bufio.NewWriter(tmp[filename].(io.Writer))
 			} else {
-				return nil, errors.New("csv_writer_middleware: connection not initialized")
+				return nil, errors.New("json_writer_middleware: connection not initialized")
+			}
+			first := ctx.Value(sys_key.SOF)
+			if tmp, ok := first.(bool); ok && tmp {
+				writer.WriteRune('[')
+				writer.WriteRune('\n')
+			}
+			eof := ctx.Value(sys_key.EOF)
+			if eof != nil && eof != "" {
+				writer.WriteRune(']')
+				writer.Flush()
+				return response, responseError
 			}
 			var tobeRendered []map[string]interface{}
 			if tmp, ok := response.(map[string]interface{}); ok {
@@ -42,41 +48,19 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 			} else if tmp, ok := response.([]map[string]interface{}); ok {
 				tobeRendered = tmp
 			}
-			if first, ok := ctx.Value(sys_key.SOF).(bool); ok {
-				if first {
-					var str strings.Builder
-					for i, key := range columns {
-						if i > 0 {
-							str.WriteRune(';')
-						}
-						str.WriteString(key)
-					}
-					if _, err := writer.WriteString(str.String()); err != nil {
-						return nil, err
-					}
-					writer.WriteRune('\n')
-				}
-			}
 			for _, data := range tobeRendered {
-				var str strings.Builder
-				for i, key := range columns {
-					item := data[key]
-					if i > 0 {
-						str.WriteRune(';')
-					}
-					_, err := str.WriteString(fmt.Sprintf("%v", item))
-					if err != nil {
+				if tmp, err := json.Marshal(data); err != nil {
+					return nil, err
+				} else {
+					if _, err = writer.WriteString(string(tmp)); err != nil {
 						return nil, err
 					}
-				}
-				if _, err := writer.WriteString(str.String()); err != nil {
-					return nil, err
-				}
-				if _, err := writer.WriteRune('\n'); err != nil {
-					return nil, err
-				}
-				if err := writer.Flush(); err != nil {
-					return nil, err
+					if _, err = writer.WriteRune('\n'); err != nil {
+						return nil, err
+					}
+					if err = writer.Flush(); err != nil {
+						return nil, err
+					}
 				}
 			}
 			return response, responseError
