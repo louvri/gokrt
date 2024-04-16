@@ -29,7 +29,7 @@ func Middleware(key, field string, value interface{}, duration time.Duration, re
 					}
 				} else {
 					ctx = context.WithValue(ctx, sys_key.EOF, "err")
-					return next(ctx, nil)
+					return next(ctx, req)
 				}
 			}
 			return next(ctx, req)
