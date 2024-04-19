@@ -27,6 +27,13 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 			}
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof != "" {
+				if eof != "eof" {
+					if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
+						if con, ok := tmp[filename].(connection.Connection); ok {
+							con.Cancel()
+						}
+					}
+				}
 				return response, responseError
 			}
 			var writer *bufio.Writer
