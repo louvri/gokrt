@@ -14,7 +14,7 @@ func Middleware(bucket string, expiry time.Duration) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			eof := ctx.Value(sys_key.EOF)
-			if eof != nil && eof == "eof" {
+			if eof != nil && eof != "" {
 				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
 					opts := &storage.SignedURLOptions{
 						Scheme:  storage.SigningSchemeV4,

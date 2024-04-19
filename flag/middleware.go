@@ -30,7 +30,7 @@ func Middleware(key, field string, value, endstate interface{}, duration time.Du
 						return next(ctx, req)
 					}
 				} else if curr == endstate {
-					ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+					ctx = context.WithValue(ctx, sys_key.EOF, curr)
 					return next(ctx, req)
 				}
 			}
