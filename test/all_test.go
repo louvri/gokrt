@@ -95,7 +95,7 @@ func TestOnEofWhileError(t *testing.T) {
 	)(func(ctx context.Context, req interface{}) (interface{}, error) {
 		return "satu", nil
 	})(ctx, -1)
-	if response.(string) == "hello world" {
+	if response != nil && response.(string) == "hello world" {
 		t.Fatal("wrong result")
 	}
 	if err != nil {
