@@ -18,8 +18,8 @@ func Middleware(
 			if original != nil || err != nil {
 				result := preprocessor(original, err)
 				if result != nil {
-					nwait := len(wait)
-					if nwait > 0 && wait[0] {
+					nasync := len(async)
+					if nasync > 0 && async[0] {
 						var wg sync.WaitGroup
 						var altered interface{}
 						wg.Add(1)
