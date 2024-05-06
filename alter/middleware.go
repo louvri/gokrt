@@ -11,7 +11,7 @@ func Middleware(
 	e endpoint.Endpoint,
 	preprocessor func(data interface{}, err error) interface{},
 	postprocessor func(original interface{}, data interface{}, err error) (interface{}, error),
-	wait ...bool) endpoint.Middleware {
+	async ...bool) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			original, err := next(ctx, req)
