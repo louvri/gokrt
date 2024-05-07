@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/iContext"
 )
 
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err error) interface{}, wait ...bool) endpoint.Middleware {
@@ -24,6 +25,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err err
 						}()
 						wg.Wait()
 					} else {
+						ctx = icontext.New(context.Background(), ctx)
 						go e(ctx, result)
 					}
 				}
