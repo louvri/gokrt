@@ -2,6 +2,7 @@ package icontext
 
 import (
 	"context"
+	"strings"
 	"time"
 )
 
@@ -27,4 +28,10 @@ func (c *CopyContext) Done() <-chan struct{} { return nil }
 func (c *CopyContext) Value(key interface{}) interface{} {
 	return c.ctx.Value(key)
 }
-func (c *CopyContext) Err() error { return c.ctx.Err() }
+func (c *CopyContext) Err() error {
+	if strings.Contains(c.ctx.Err().Error(), "deadline") ||
+		strings.Contains(c.ctx.Err().Error(), "canceled") {
+		return nil
+	}
+	return c.ctx.Err()
+}
