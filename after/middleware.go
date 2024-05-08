@@ -26,7 +26,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err err
 						}()
 						wg.Wait()
 					} else {
-						ctx = icontext.New(ctx, time.Now().Add(5*time.Second))
+						if _, ok := ctx.(*icontext.CopyContext); !ok {
+							ctx = icontext.New(ctx, time.Now().Add(5*time.Second))
+						}
 						go e(ctx, result)
 					}
 				}
