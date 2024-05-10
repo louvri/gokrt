@@ -21,7 +21,6 @@ func Middleware(bucket string, expiry time.Duration) endpoint.Middleware {
 						Method:  "GET",
 						Expires: time.Now().Add(expiry),
 					}
-					var err error
 					uris := make([]string, 0)
 					for key, fileObject := range fileObjects {
 						if con, ok := fileObject.(connection.Connection); ok && con.Driver() == "gcs" {
@@ -31,7 +30,7 @@ func Middleware(bucket string, expiry time.Duration) endpoint.Middleware {
 							}
 						}
 					}
-					_, err = next(ctx, req)
+					_, err := next(ctx, uris)
 					return uris, err
 				}
 			}
