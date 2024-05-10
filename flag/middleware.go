@@ -40,3 +40,11 @@ func Middleware(key, field string, value, endstate interface{}, duration time.Du
 		}
 	}
 }
+func Last(key, field string, redis *goRedis.Client) (interface{}, error) {
+	cmd := redis.HGet(context.Background(), key, field)
+	curr := cmd.Val()
+	if cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+	return curr, nil
+}
