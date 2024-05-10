@@ -30,7 +30,7 @@ func Middleware(bucket string, expiry time.Duration) endpoint.Middleware {
 							}
 						}
 					}
-					_, err := next(ctx, uris)
+					_, err := next(ctx, req)
 					return uris, err
 				}
 			}
