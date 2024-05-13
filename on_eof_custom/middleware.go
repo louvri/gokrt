@@ -1,4 +1,4 @@
-package on_eof
+package on_eof_custom
 
 import (
 	"context"
