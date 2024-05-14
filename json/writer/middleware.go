@@ -30,11 +30,12 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 			} else {
 				return nil, errors.New("json_writer_middleware: connection not initialized")
 			}
-
+			shouldAddComma := true
 			first := ctx.Value(sys_key.SOF)
 			if tmp, ok := first.(bool); ok && tmp {
 				writer.WriteRune('[')
 				writer.WriteRune('\n')
+				shouldAddComma = false
 			}
 			var tobeRendered []map[string]interface{}
 			if tmp, ok := response.(map[string]interface{}); ok {
@@ -43,7 +44,6 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 			} else if tmp, ok := response.([]map[string]interface{}); ok {
 				tobeRendered = tmp
 			}
-			shouldAddComma := false
 			for _, data := range tobeRendered {
 				filtered := make(map[string]interface{})
 				for _, key := range columns {
@@ -52,9 +52,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				if tmp, err := json.Marshal(filtered); err != nil {
 					return nil, err
 				} else {
-					if !shouldAddComma {
-						shouldAddComma = true
-					} else {
+					if shouldAddComma {
 						if _, err = writer.WriteRune(','); err != nil {
 							return nil, err
 						}
