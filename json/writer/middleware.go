@@ -36,12 +36,6 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				writer.WriteRune('[')
 				writer.WriteRune('\n')
 			}
-			eof := ctx.Value(sys_key.EOF)
-			if eof != nil && eof != "" {
-				writer.WriteRune(']')
-				writer.Flush()
-				return response, responseError
-			}
 			var tobeRendered []map[string]interface{}
 			if tmp, ok := response.(map[string]interface{}); ok {
 				tobeRendered = make([]map[string]interface{}, 0)
@@ -75,6 +69,11 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 						return nil, err
 					}
 				}
+			}
+			eof := ctx.Value(sys_key.EOF)
+			if eof != nil && eof == "eof" {
+				writer.WriteRune(']')
+				writer.Flush()
 			}
 			return response, responseError
 		}
