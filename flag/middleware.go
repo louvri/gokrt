@@ -34,18 +34,9 @@ func Middleware(key, field string, value, endstate interface{}, duration time.Du
 					return next(ctx, req)
 				}
 			}
-			response, err := next(ctx, req)
 			redis.Expire(ctx, key, duration)
 			redis.HSet(ctx, key, field, value)
-			return response, err
+			return next(ctx, req)
 		}
 	}
-}
-func Last(key, field string, redis *goRedis.Client) (interface{}, error) {
-	cmd := redis.HGet(context.Background(), key, field)
-	curr := cmd.Val()
-	if cmd.Err() != nil {
-		return nil, cmd.Err()
-	}
-	return curr, nil
 }
