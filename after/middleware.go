@@ -3,7 +3,6 @@ package after
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	icontext "github.com/louvri/gokrt/icontext"
@@ -27,7 +26,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err err
 						wg.Wait()
 					} else {
 						if _, ok := ctx.(*icontext.CopyContext); !ok {
-							ctx = icontext.New(ctx, time.Now().Add(5*time.Second))
+							ctx = icontext.New(ctx)
 						}
 						go e(ctx, result)
 					}

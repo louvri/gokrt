@@ -42,7 +42,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				}
 				return response, responseError
 			}
-			if eof != nil && eof == "eof" {
+			if eof != nil {
 				return response, responseError
 			}
 			var writer *bufio.Writer

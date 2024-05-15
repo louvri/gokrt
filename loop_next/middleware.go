@@ -18,7 +18,7 @@ func Middleware(
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			eof := ctx.Value(sys_key.EOF)
-			if eof != nil && eof == "eof" {
+			if eof != nil {
 				return next(ctx, nil)
 			} else {
 				if len(wait) > 0 && wait[0] {
