@@ -15,6 +15,24 @@ import (
 func Middleware(filename string, columns []string, cancelOnError bool) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			eof := ctx.Value(sys_key.EOF)
+			if eof != nil && eof == "eof" {
+				var writer *bufio.Writer
+				if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil {
+					writer = bufio.NewWriter(tmp[filename].(io.Writer))
+				} else {
+					return nil, errors.New("json_writer_middleware: connection not initialized")
+				}
+				if _, err := writer.WriteRune(']'); err != nil {
+					return nil, err
+				}
+				if _, err := writer.WriteRune('\n'); err != nil {
+					return nil, err
+				}
+				if err := writer.Flush(); err != nil {
+					return nil, err
+				}
+			}
 			response, responseError := next(ctx, req)
 			if responseError != nil && cancelOnError {
 				if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
@@ -22,6 +40,9 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 						con.Cancel()
 					}
 				}
+				return response, responseError
+			}
+			if eof != nil {
 				return response, responseError
 			}
 			var writer *bufio.Writer
@@ -36,11 +57,6 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				writer.WriteRune('[')
 				writer.WriteRune('\n')
 				shouldAddComma = false
-			}
-			eof := ctx.Value(sys_key.EOF)
-			if eof != nil && eof == "eof" {
-				writer.WriteRune(']')
-				writer.Flush()
 			}
 			var tobeRendered []map[string]interface{}
 			if tmp, ok := response.(map[string]interface{}); ok {

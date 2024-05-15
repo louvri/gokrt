@@ -7,7 +7,7 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(condition func(ctx context.Context) bool, middlewares ...endpoint.Middleware) endpoint.Middleware {
+func Middleware(condition func(ctx context.Context) bool, deferFunction func(ctx context.Context) error, middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			eof := ctx.Value(sys_key.EOF)
@@ -19,7 +19,8 @@ func Middleware(condition func(ctx context.Context) bool, middlewares ...endpoin
 					next = middlewares[i](next)
 				}
 				return next(ctx, req)
-			} else if eof != nil && eof == "err" {
+			} else if eof != nil {
+				deferFunction(ctx)
 				return nil, nil
 			}
 			return next(ctx, req)
