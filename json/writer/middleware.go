@@ -42,7 +42,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				}
 				return response, responseError
 			}
-			if eof != nil {
+			if eof != nil && eof == "eof" {
 				return response, responseError
 			}
 			var writer *bufio.Writer
@@ -77,13 +77,16 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 						if _, err = writer.WriteRune(','); err != nil {
 							return nil, err
 						}
+						if _, err = writer.WriteRune('\n'); err != nil {
+							return nil, err
+						}
 					} else {
+						if _, err = writer.WriteRune('\n'); err != nil {
+							return nil, err
+						}
 						shouldAddComma = true
 					}
 					if _, err = writer.WriteString(string(tmp)); err != nil {
-						return nil, err
-					}
-					if _, err = writer.WriteRune('\n'); err != nil {
 						return nil, err
 					}
 					if err = writer.Flush(); err != nil {
