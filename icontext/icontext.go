@@ -9,7 +9,7 @@ type CopyContext struct {
 	ctx context.Context
 }
 
-func New(ctx context.Context, deadline time.Time) context.Context {
+func New(ctx context.Context) context.Context {
 	return &CopyContext{
 		ctx: ctx,
 	}
