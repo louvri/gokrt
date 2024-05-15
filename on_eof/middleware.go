@@ -11,7 +11,7 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			eof := ctx.Value(sys_key.EOF)
-			if eof != nil && eof == "eof" {
+			if eof != nil {
 				next = func(ctx context.Context, req interface{}) (interface{}, error) {
 					return "", nil
 				}
@@ -19,8 +19,6 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 					next = middlewares[i](next)
 				}
 				return next(ctx, req)
-			} else if eof != nil && eof == "err" {
-				return nil, nil
 			}
 			return next(ctx, req)
 		}
