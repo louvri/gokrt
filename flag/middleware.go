@@ -34,9 +34,10 @@ func Middleware(key, field string, value, endstate interface{}, duration time.Du
 					return next(ctx, req)
 				}
 			}
+			response, err := next(ctx, req)
 			redis.Expire(ctx, key, duration)
 			redis.HSet(ctx, key, field, value)
-			return next(ctx, req)
+			return response, err
 		}
 	}
 }
