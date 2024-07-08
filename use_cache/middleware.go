@@ -12,7 +12,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			response, err := next(ctx, req)
 			cache := ctx.Value(sys_key.CACHE_KEY)
-			if cache != nil && err != nil {
+			if cache != nil && err == nil {
 				req = preprocessor(req)
 				if req != nil {
 					_, err := e(ctx, req)
