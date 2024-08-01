@@ -15,7 +15,7 @@ func Middleware(
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			original, err := next(ctx, req)
-			if original != nil {
+			if original != nil && err != nil {
 				result := preprocessor(original, err)
 				if result != nil {
 					nasync := len(async)
