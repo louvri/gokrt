@@ -80,6 +80,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			for scanner.Scan() {
 				text := scanner.Text()
 				text = strings.ReplaceAll(text, "\ufeff", "")
+				text = strings.ReplaceAll(text, "\xa0", " ")
 				text = strings.TrimSpace(text)
 				if first {
 					columns = strings.Split(text, ";")
