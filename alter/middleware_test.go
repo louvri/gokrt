@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/alter"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/model/option"
 )
 
 type Mock interface {
@@ -107,7 +108,7 @@ func TestNotStopWithError(t *testing.T) {
 		}, func(original, data interface{}, err error) (interface{}, error) {
 			t.Log(data)
 			return data, nil
-		}, alter.RUN_WITH_ERROR),
+		}, RUN_WITH_OPTION.RUN_WITH_ERROR),
 	)(m.Main)(context.Background(), "")
 	if result, ok := resp.(string); ok {
 		if result != "first endpoint" {

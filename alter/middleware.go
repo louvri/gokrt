@@ -5,39 +5,35 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/model/option"
 )
-
-type Option string
-
-var RUN_WITH_ERROR Option = "RUN ON ERROR"
-var RUN_ASYNC Option = "RUN ASYNC"
 
 func Middleware(
 	e endpoint.Endpoint,
 	preprocessor func(data interface{}, err error) interface{},
 	postprocessor func(original interface{}, data interface{}, err error) (interface{}, error),
-	opts ...Option) endpoint.Middleware {
+	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			opt := make(map[Option]bool)
+			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				switch option {
-				case RUN_ASYNC:
-					opt[RUN_ASYNC] = true
+				case RUN_WITH_OPTION.RUN_ASYNC:
+					opt[RUN_WITH_OPTION.RUN_ASYNC] = true
 					continue
-				case RUN_WITH_ERROR:
-					opt[RUN_WITH_ERROR] = true
+				case RUN_WITH_OPTION.RUN_WITH_ERROR:
+					opt[RUN_WITH_OPTION.RUN_WITH_ERROR] = true
 					continue
 				default:
 					continue
 				}
 			}
 			original, err := next(ctx, req)
-			runOnError := opt[RUN_WITH_ERROR]
+			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
 			if original != nil && (err == nil || runOnError) {
 				result := preprocessor(original, err)
 				if result != nil {
-					if runAsync := opt[RUN_ASYNC]; runAsync {
+					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC]; runAsync {
 						var wg sync.WaitGroup
 						var altered interface{}
 						wg.Add(1)
