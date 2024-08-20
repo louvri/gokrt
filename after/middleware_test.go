@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/after"
-	RUN_WITH_OPTION "github.com/louvri/gokrt/model/option"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
 
 type Mock interface {
@@ -20,7 +20,7 @@ type Mock interface {
 }
 
 var EXPECTED_RESULT string = "main endpoint"
-var ERROR error = errors.New("it's error")
+var ErrFoo = errors.New("it's error")
 
 type mock struct {
 	logger *log.Logger
@@ -46,7 +46,7 @@ func (m *mock) Third(ctx context.Context, request interface{}) (interface{}, err
 	return "third endpoint", nil
 }
 func (m *mock) Error(ctx context.Context, request interface{}) (interface{}, error) {
-	return nil, ERROR
+	return nil, ErrFoo
 }
 func TestHappyCaseAlter(t *testing.T) {
 	m := NewMock()
@@ -113,8 +113,8 @@ func TestStopWithError(t *testing.T) {
 		}),
 	)(m.Error)(context.Background(), "")
 	if result, ok := resp.(string); ok {
-		if result != ERROR.Error() {
-			t.Logf("got '%s' expected '%s'", ERROR.Error(), result)
+		if result != ErrFoo.Error() {
+			t.Logf("got '%s' expected '%s'", ErrFoo.Error(), result)
 			t.FailNow()
 		}
 	}

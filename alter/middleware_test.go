@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/alter"
-	RUN_WITH_OPTION "github.com/louvri/gokrt/model/option"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
 
 type Mock interface {
