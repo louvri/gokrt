@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
-	RUN_WITH_OPTION "github.com/louvri/gokrt/model/option"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
 
 func Middleware(

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	icontext "github.com/louvri/gokrt/icontext"
-	RUN_WITH_OPTION "github.com/louvri/gokrt/model/option"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
 
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}, err error) interface{}, opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
