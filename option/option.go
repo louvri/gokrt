@@ -4,5 +4,5 @@ type Option string
 
 var RUN_WITH_ERROR Option = "RUN ON ERROR"
 var RUN_ASYNC Option = "RUN ASYNC"
-
-var Test string
+var EXECUTE_AFTER Option = "EXECUTE AFTER"
+var EXECUTE_BEFORE Option = "EXECUTE BEFORE"
