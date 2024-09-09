@@ -24,27 +24,46 @@ func Middleware(
 				case RUN_WITH_OPTION.RUN_WITH_ERROR:
 					opt[RUN_WITH_OPTION.RUN_WITH_ERROR] = true
 					continue
+				case RUN_WITH_OPTION.EXECUTE_AFTER:
+					opt[RUN_WITH_OPTION.EXECUTE_AFTER] = true
+				case RUN_WITH_OPTION.EXECUTE_BEFORE:
+					opt[RUN_WITH_OPTION.EXECUTE_BEFORE] = true
 				default:
 					continue
 				}
 			}
-			original, err := next(ctx, req)
+			var original interface{}
+			var err error
+			if opt[RUN_WITH_OPTION.EXECUTE_BEFORE] {
+				original, err = e(ctx, req)
+			} else {
+				original, err = next(ctx, req)
+			}
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
 			if original != nil && (err == nil || runOnError) {
 				result := preprocessor(original, err)
 				if result != nil {
+					var altered interface{}
 					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC]; runAsync {
 						var wg sync.WaitGroup
-						var altered interface{}
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							altered, err = e(ctx, result)
+							if opt[RUN_WITH_OPTION.EXECUTE_BEFORE] {
+								altered, err = next(ctx, req)
+							} else {
+								altered, err = e(ctx, req)
+							}
 						}()
 						wg.Wait()
 						return postprocessor(original, altered, err)
 					} else {
-						altered, err := e(ctx, result)
+
+						if opt[RUN_WITH_OPTION.EXECUTE_BEFORE] {
+							original, err = next(ctx, req)
+						} else {
+							altered, err = e(ctx, result)
+						}
 						return postprocessor(original, altered, err)
 					}
 
