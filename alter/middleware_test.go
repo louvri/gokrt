@@ -158,3 +158,36 @@ func TestStopWithError(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestBeforeRun(t *testing.T) {
+	m := NewMock()
+	resp, _ := endpoint.Chain(
+		alter.Middleware(m.First, func(data interface{}, err error) interface{} {
+			t.Log(data)
+			return data
+		}, func(original, data interface{}, err error) (interface{}, error) {
+			t.Log(original)
+			return original, nil
+		}, RUN_WITH_OPTION.EXECUTE_BEFORE),
+		alter.Middleware(m.Second, func(data interface{}, err error) interface{} {
+			t.Log(data)
+			return data
+		}, func(original, data interface{}, err error) (interface{}, error) {
+			t.Log(data)
+			return data, nil
+		}),
+		alter.Middleware(m.Third, func(data interface{}, err error) interface{} {
+			t.Log(data)
+			return data
+		}, func(original, data interface{}, err error) (interface{}, error) {
+			t.Log(data)
+			return data, nil
+		}),
+	)(m.Main)(context.Background(), "")
+	if result, ok := resp.(string); ok {
+		if result != "second endpoint" {
+			t.Logf("got %s but it should be 'second endpoint'", result)
+			t.FailNow()
+		}
+	}
+}
