@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
+	"github.com/louvri/gosl"
 )
 
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
@@ -25,9 +26,16 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					opt[RUN_WITH_OPTION.EXECUTE_AFTER] = true
 				case RUN_WITH_OPTION.EXECUTE_BEFORE:
 					opt[RUN_WITH_OPTION.EXECUTE_BEFORE] = true
+				case RUN_WITH_OPTION.RUN_WITH_TRANSACTION:
+					opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] = true
 				default:
 					continue
 				}
+			}
+
+			var kit gosl.Kit
+			if opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] {
+				kit = gosl.New(ctx)
 			}
 
 			if tmp, ok := opt[RUN_WITH_OPTION.RUN_ASYNC]; ok && runAsync {
@@ -43,24 +51,43 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 				return resp, err
 			} else {
 				if resp != nil {
+					processor := func(ctx context.Context, data interface{}) (interface{}, error) {
+						var result interface{}
+						var err error
+						if arr, ok := data.([]map[string]interface{}); ok {
+							for _, item := range arr {
+								result, err = e(ctx, preprocessor(item))
+								if err != nil && !ignoreError {
+									return result, err
+								}
+							}
+						} else if arr, ok := data.([]interface{}); ok {
+							for _, item := range arr {
+								result, err = e(ctx, preprocessor(item))
+								if err != nil && !ignoreError {
+									return result, err
+								}
+							}
+						}
+						return result, nil
+					}
 					var err error
 					if runAsync {
 						var wg sync.WaitGroup
 						wg.Add(1)
 						go func() {
-							if arr, ok := resp.([]map[string]interface{}); ok {
-								for _, item := range arr {
-									if _, tmpErr := e(ctx, preprocessor(item)); tmpErr != nil {
-										err = tmpErr
+							if opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] {
+								if errTransaction := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+									_, err := processor(ctx, resp)
+									if err != nil {
+										return err
 									}
-
+									return nil
+								}); errTransaction != nil {
+									err = errTransaction
 								}
-							} else if arr, ok := resp.([]interface{}); ok {
-								for _, item := range arr {
-									if _, tmpErr := e(ctx, preprocessor(item)); tmpErr != nil {
-										err = tmpErr
-									}
-								}
+							} else {
+								_, err = processor(ctx, resp)
 							}
 							wg.Done()
 						}()
@@ -70,19 +97,19 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						}
 
 					} else {
-						if arr, ok := resp.([]map[string]interface{}); ok {
-							for _, item := range arr {
-								curr, err := e(ctx, preprocessor(item))
-								if err != nil && !ignoreError {
-									return curr, err
-								}
+						if opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] {
+							var curr interface{}
+							err = kit.RunInTransaction(ctx, func(ctx context.Context) error {
+								result, err := processor(ctx, resp)
+								curr = result
+								return err
+							})
+							if err != nil && !ignoreError {
+								return curr, err
 							}
-						} else if arr, ok := resp.([]interface{}); ok {
-							for _, item := range arr {
-								curr, err := e(ctx, preprocessor(item))
-								if err != nil && !ignoreError {
-									return curr, err
-								}
+						} else {
+							if curr, err := processor(ctx, resp); err != nil && !ignoreError {
+								return curr, err
 							}
 						}
 					}
