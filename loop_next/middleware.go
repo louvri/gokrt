@@ -20,7 +20,7 @@ func Middleware(
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
-
+			// bundledErr := make([]interface{}, 0)
 			for _, option := range opts {
 				switch option {
 				case RUN_WITH_OPTION.RUN_ASYNC:
@@ -33,6 +33,8 @@ func Middleware(
 					opt[RUN_WITH_OPTION.EXECUTE_AFTER] = true
 				case RUN_WITH_OPTION.EXECUTE_BEFORE:
 					opt[RUN_WITH_OPTION.EXECUTE_BEFORE] = true
+				case RUN_WITH_OPTION.RUN_WITH_TRANSACTION:
+					opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] = true
 				default:
 					continue
 				}

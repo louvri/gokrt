@@ -2,103 +2,105 @@ package loop_next_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/jmoiron/sqlx"
+	"github.com/louvri/gokrt/after"
 	"github.com/louvri/gokrt/loop_next"
+	"github.com/louvri/gokrt/loop_next/mock"
 	"github.com/louvri/gokrt/option"
+	"github.com/louvri/gosl"
 )
 
-var err = errors.New("error appear")
+var ctx context.Context
+var tmpIndex = 0
 
-type Mock interface {
-	Main(ctx context.Context, request interface{}) (interface{}, error)
-	Executor(ctx context.Context, request interface{}) (interface{}, error)
-}
-
-type mock struct {
-	logger *log.Logger
-}
-
-var batch = []interface{}{
-	"1stIndex",
-	"2ndIndex",
-	err,
-	"3rdIndex",
-	"4thIndex",
-	err,
-	"5thIndex",
-	"6thIndex",
-	err,
-	"7thIndex",
-	"8thIndex",
-	err,
-	"9thIndex",
-	"10thIndex",
-	err,
-}
-
-func NewMock() Mock {
-	return &mock{
-		logger: log.Default(),
-	}
-}
-
-var counter = 0
-
-func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
-
-	if counter >= len(batch) {
-		return nil, nil
-	}
-	fmt.Println(batch[counter])
-	if err, ok := batch[counter].(error); ok {
-		return nil, err
-	}
-	return batch[counter], nil
-}
-
-func (m *mock) Executor(ctx context.Context, request interface{}) (interface{}, error) {
-	m.logger.Printf("output exector endpoint: %s", request)
-	if err, ok := request.(error); ok && err != nil {
-		return nil, err
-	}
-	return request, nil
-}
-
-func TestLoopNext(t *testing.T) {
-	m := NewMock()
+func TestLoopNextNotIgnoreError(t *testing.T) {
+	m := mock.NewMock()
 	_, err := endpoint.Chain(
 		loop_next.Middleware(func(prev, curr interface{}) bool {
-			counter += 1
-			comparator := len(batch) < counter
+			comparator := len(mock.Err.Error()) <= m.GetCounter()
+			m.Increment(1)
 			return comparator
 		}, func(req, next interface{}) interface{} {
-			return counter
+			return tmpIndex
 		}),
-	)(m.Main)(context.Background(), counter)
-	if err == nil {
-		t.Log("should error since it has to stopped when error")
+		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
+			if data != nil && err == nil {
+				return data
+			}
+			return err
+		}),
+	)(m.Main)(context.Background(), tmpIndex)
+	if err != nil {
+		t.Log(err.Error())
 		t.FailNow()
 	}
 }
 
-func TestLoopNextNotIgnoreError(t *testing.T) {
-	m := NewMock()
+func TestLoopNext(t *testing.T) {
+	m := mock.NewMock()
 	_, err := endpoint.Chain(
 		loop_next.Middleware(func(prev, curr interface{}) bool {
-			counter += 1
-			comparator := len(batch) <= counter
+			m.Increment(1)
+			comparator := len(mock.Batch) <= m.GetCounter()
 			return comparator
 		}, func(req, next interface{}) interface{} {
-			return counter
+			return m.GetCounter()
 		}, option.RUN_WITH_ERROR),
-	)(m.Main)(context.Background(), counter)
+		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
+			if data != nil && err == nil {
+				return data
+			}
+			return err
+		}, option.RUN_WITH_ERROR),
+	)(m.Main)(context.Background(), m.GetCounter())
 	if err == nil {
 		t.Log("should error")
+		t.FailNow()
+	}
+}
+
+func TestRunTransaction(t *testing.T) {
+	ctx = context.Background()
+	m := mock.NewMock()
+	db, err := sqlx.Connect("mysql", fmt.Sprintf(
+		"%s:%s@(%s:%s)/%s",
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx"))
+
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+	mDB := mock.NewMockDB(db)
+	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
+
+	_, err = endpoint.Chain(
+		loop_next.Middleware(func(prev, curr interface{}) bool {
+			m.Increment(1)
+			comparator := len(mock.Batch) <= m.GetCounter()
+			return comparator
+		}, func(req, next interface{}) interface{} {
+			res := m.GetCounter()
+			return res
+		}, option.RUN_WITH_TRANSACTION, option.RUN_WITH_ERROR),
+		after.Middleware(
+			mDB.Upsert, func(data interface{}, err error) interface{} {
+				if data != nil && err == nil {
+					return data
+				}
+				return err
+			}, option.RUN_ASYNC,
+		),
+	)(m.Main)(ctx, tmpIndex)
+	if err != nil {
+		t.Log(err.Error())
 		t.FailNow()
 	}
 }
