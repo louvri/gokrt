@@ -8,7 +8,6 @@ import (
 	"io"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/sys_key"
@@ -84,18 +83,10 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			lineNumber := 1
 			for scanner.Scan() {
 				text := scanner.Text()
-				trimmed := func(text string) string {
-					var sb strings.Builder
-					for _, r := range text {
-						if r == utf8.RuneError {
-							// Skip invalid UTF-8 characters
-							continue
-						}
-						sb.WriteRune(r)
-					}
-					return sb.String()
-				}
-				text = trimmed(text)
+				text = strings.ReplaceAll(text, "\ufeff", "")
+				text = strings.ReplaceAll(text, "\xa0", " ")
+				text = strings.ReplaceAll(text, "\"", " ")
+				text = strings.TrimSpace(text)
 				if first {
 					columns = strings.Split(text, splitter)
 					first = false
