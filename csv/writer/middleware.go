@@ -13,9 +13,14 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(filename string, columns []string, cancelOnError bool) endpoint.Middleware {
+func Middleware(filename, splitter string, columns []string, cancelOnError bool) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			splitterRune := ';'
+			if splitter != "" {
+				r := []rune(splitter)
+				splitterRune = r[0]
+			}
 			response, responseError := next(ctx, req)
 			if responseError != nil && cancelOnError {
 				if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
@@ -54,7 +59,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 					var str strings.Builder
 					for i, key := range columns {
 						if i > 0 {
-							str.WriteRune(';')
+							str.WriteRune(splitterRune)
 						}
 						str.WriteString(key)
 					}
@@ -69,7 +74,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				for i, key := range columns {
 					item := data[key]
 					if i > 0 {
-						str.WriteRune(';')
+						str.WriteRune(splitterRune)
 					}
 					_, err := str.WriteString(fmt.Sprintf("%v", item))
 					if err != nil {
