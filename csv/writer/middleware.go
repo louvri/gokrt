@@ -13,12 +13,12 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(filename, splitter string, columns []string, cancelOnError bool) endpoint.Middleware {
+func Middleware(filename string, columns []string, cancelOnError bool, splitter ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			splitterRune := ';'
-			if splitter != "" {
-				r := []rune(splitter)
+			if len(splitter) > 0 && splitter[0] != "" {
+				r := []rune(splitter[0])
 				splitterRune = r[0]
 			}
 			response, responseError := next(ctx, req)

@@ -14,11 +14,12 @@ import (
 	sql "github.com/louvri/gosl"
 )
 
-func Middleware(filename string, splitter string, size int, decoder func(data interface{}) interface{}, useTransaction bool, ignoreError bool) endpoint.Middleware {
+func Middleware(filename string, size int, decoder func(data interface{}) interface{}, useTransaction bool, ignoreError bool, splitterSym ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			if splitter == "" {
-				splitter = ";"
+			splitter := ";"
+			if len(splitterSym) > 0 && splitterSym[0] != "" {
+				splitter = splitterSym[0]
 			}
 			var reader io.Reader
 			if tmp, ok := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil && ok {
