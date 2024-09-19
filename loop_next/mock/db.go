@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/louvri/gosl"
 )
 
 type MockDB interface {
@@ -34,11 +35,13 @@ func (m *mockDB) Upsert(ctx context.Context, request interface{}) (interface{}, 
 	if tmp, ok := request.(string); ok {
 		tobeInsert = tmp
 	} else if tmp, ok := request.(error); ok {
+		fmt.Printf("found error on upsert: %v \n", tmp)
 		return nil, tmp
 	}
+	queryable := ctx.Value(gosl.SQL_KEY).(*gosl.Queryable)
 	fmt.Printf("tobe inserted on upsert: %s \n", tobeInsert)
 	query := fmt.Sprintf("INSERT INTO trx_table(`values`) VALUES('%s')", tobeInsert)
-	res, err := m.db.ExecContext(ctx, query)
+	res, err := queryable.ExecContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}

@@ -12,19 +12,19 @@ var instance *mock
 var Batch = []interface{}{
 	"1stIndex",
 	"2ndIndex",
-	// Err,
+	Err,
 	"3rdIndex",
 	"4thIndex",
-	// Err,
+	Err,
 	"5thIndex",
 	"6thIndex",
-	// Err,
+	Err,
 	"7thIndex",
 	"8thIndex",
-	// Err,
+	Err,
 	"9thIndex",
 	"10thIndex",
-	// Err,
+	Err,
 }
 
 type Mock interface {

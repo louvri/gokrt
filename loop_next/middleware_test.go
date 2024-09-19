@@ -2,8 +2,11 @@ package loop_next_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/jmoiron/sqlx"
@@ -89,18 +92,60 @@ func TestRunTransaction(t *testing.T) {
 		}, func(req, next interface{}) interface{} {
 			res := m.GetCounter()
 			return res
-		}, option.RUN_WITH_TRANSACTION, option.RUN_WITH_ERROR),
+		},
+		// option.RUN_IN_TRANSACTION,
+		),
 		after.Middleware(
 			mDB.Upsert, func(data interface{}, err error) interface{} {
 				if data != nil && err == nil {
 					return data
 				}
 				return err
-			}, option.RUN_ASYNC,
+			},
+			option.RUN_ASYNC,
 		),
 	)(m.Main)(ctx, tmpIndex)
 	if err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
+}
+
+func TestRunErrorTransaction(t *testing.T) {
+	db := gosl.ConnectToDB(
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx",
+		1,
+		1,
+		2*time.Minute,
+		2*time.Minute,
+	)
+	ctx := context.WithValue(context.Background(),
+		gosl.SQL_KEY,
+		gosl.NewQueryable(db))
+	// queryable := ctx.Value(gosl.SQL_KEY).(*gosl.Queryable)
+
+	mockDb := mock.NewMockDB(db)
+
+	kit := gosl.New(ctx)
+	if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+		var batchError []string
+		for _, data := range mock.Batch {
+			_, err := mockDb.Upsert(ctx, data)
+			if err != nil {
+				batchError = append(batchError, err.Error())
+			}
+		}
+		if len(batchError) > 0 {
+			return errors.New(strings.Join(batchError, " || "))
+		}
+		return nil
+	}); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
 }
