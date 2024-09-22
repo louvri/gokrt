@@ -9,8 +9,10 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/after"
 	"github.com/louvri/gokrt/alter"
+	"github.com/louvri/gokrt/cache"
 	"github.com/louvri/gokrt/on_eof"
 	"github.com/louvri/gokrt/sys_key"
+	"github.com/louvri/gokrt/use_cache"
 )
 
 type key int
@@ -104,5 +106,37 @@ func TestOnEofWhileError(t *testing.T) {
 }
 
 func TestCacheAndUseCache(t *testing.T) {
+	ctx := context.Background()
+	key1 := "key-1"
+	cache1 := "cache-1"
+	key2 := "key-2"
+	cache2 := "cache-2"
 
+	// request := make(map[string]interface{})
+	_, err := endpoint.Chain(
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache1, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, key1),
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache2, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, key2),
+
+		use_cache.Middleware(
+			func(ctx context.Context, request interface{}) (response interface{}, err error) {
+				return request, nil
+			}, func(cache, next interface{}) interface{} {
+				return fmt.Sprintf("%v + %v", next, cache)
+			}, true,
+		),
+	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "main result", nil
+	})(ctx, "current request")
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
 }
