@@ -102,3 +102,7 @@ func TestOnEofWhileError(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 }
+
+func TestCacheAndUseCache(t *testing.T) {
+
+}
