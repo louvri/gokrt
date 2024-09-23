@@ -22,12 +22,13 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 						// let the middleware know if the cache is stored on multipled or not
 						cache = cached[CACHE_KEY]
 					}
-					req = preprocessor(cache, response)
-					if req != nil {
-						_, err := e(ctx, req)
-						if err != nil {
-							return nil, err
-						}
+
+				}
+				req = preprocessor(cache, response)
+				if req != nil {
+					_, err := e(ctx, req)
+					if err != nil {
+						return nil, err
 					}
 				}
 			}
