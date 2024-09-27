@@ -7,15 +7,44 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}, cacheKey ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			if ctx.Value(sys_key.CACHE_KEY) == nil {
+			existingCache := ctx.Value(sys_key.CACHE_KEY)
+			var key string
+			if len(cacheKey) > 0 && cacheKey[0] != "" {
+				key = cacheKey[0]
+			}
+			if existingCache == nil && key == "" {
 				response, err := e(ctx, preprocessor(req))
 				if err != nil {
 					return nil, err
 				}
 				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
+			} else if existingCache == nil && key != "" {
+				response, err := e(ctx, preprocessor(req))
+				if err != nil {
+					return nil, err
+				}
+				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, map[string]interface{}{
+					key: response,
+				})
+			} else if existingCache != nil {
+				tobeCached := make(map[string]interface{})
+				if mapExist, ok := existingCache.(map[string]interface{}); ok {
+					tobeCached = mapExist
+				}
+
+				response, err := e(ctx, preprocessor(req))
+				if err != nil {
+					return nil, err
+				}
+				if key != "" {
+					tobeCached[key] = response
+					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, tobeCached)
+				} else if key == "" {
+					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
+				}
 			}
 			return next(ctx, req)
 		}

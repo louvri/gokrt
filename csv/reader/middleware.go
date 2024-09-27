@@ -14,9 +14,13 @@ import (
 	sql "github.com/louvri/gosl"
 )
 
-func Middleware(filename string, size int, decoder func(data interface{}) interface{}, useTransaction bool, ignoreError bool) endpoint.Middleware {
+func Middleware(filename string, size int, decoder func(data interface{}) interface{}, useTransaction bool, ignoreError bool, splitterSym ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			splitter := ";"
+			if len(splitterSym) > 0 && splitterSym[0] != "" {
+				splitter = splitterSym[0]
+			}
 			var reader io.Reader
 			if tmp, ok := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil && ok {
 				reader = tmp[filename].(io.Reader)
@@ -81,13 +85,14 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 				text := scanner.Text()
 				text = strings.ReplaceAll(text, "\ufeff", "")
 				text = strings.ReplaceAll(text, "\xa0", " ")
+				text = strings.ReplaceAll(text, "\"", " ")
 				text = strings.TrimSpace(text)
 				if first {
-					columns = strings.Split(text, ";")
+					columns = strings.Split(text, splitter)
 					first = false
 					ctx = context.WithValue(ctx, sys_key.SOF, true)
 				} else {
-					values := strings.Split(text, ";")
+					values := strings.Split(text, splitter)
 					//check values
 					isempty := true
 					for _, item := range values {

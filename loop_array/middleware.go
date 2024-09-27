@@ -2,6 +2,8 @@ package loop_array
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
@@ -13,7 +15,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
-			var ignoreError, runAsync bool
+			var IGNORE_ERROR, RUN_ASYNCHRONOUSLY bool
 			for _, option := range opts {
 				switch option {
 				case RUN_WITH_OPTION.RUN_ASYNC:
@@ -26,28 +28,31 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					opt[RUN_WITH_OPTION.EXECUTE_AFTER] = true
 				case RUN_WITH_OPTION.EXECUTE_BEFORE:
 					opt[RUN_WITH_OPTION.EXECUTE_BEFORE] = true
-				case RUN_WITH_OPTION.RUN_WITH_TRANSACTION:
-					opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] = true
+				case RUN_WITH_OPTION.RUN_IN_TRANSACTION:
+					opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] = true
 				default:
 					continue
 				}
 			}
 
 			var kit gosl.Kit
-			if opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] {
+			BUNDLE_OF_ERRORS := make([]string, 0)
+			var RUN_IN_TRANSACTION bool
+			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
+				RUN_IN_TRANSACTION = true
 				kit = gosl.New(ctx)
 			}
 
-			if tmp, ok := opt[RUN_WITH_OPTION.RUN_ASYNC]; ok && runAsync {
-				runAsync = tmp
+			if tmp, ok := opt[RUN_WITH_OPTION.RUN_ASYNC]; ok && RUN_ASYNCHRONOUSLY {
+				RUN_ASYNCHRONOUSLY = tmp
 			}
 
 			if tmp, ok := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]; ok && tmp {
-				ignoreError = tmp
+				IGNORE_ERROR = tmp
 			}
 
 			resp, err := next(ctx, req)
-			if err != nil && !ignoreError {
+			if err != nil && !IGNORE_ERROR {
 				return resp, err
 			} else {
 				if resp != nil {
@@ -57,62 +62,76 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						if arr, ok := data.([]map[string]interface{}); ok {
 							for _, item := range arr {
 								result, err = e(ctx, preprocessor(item))
-								if err != nil && !ignoreError {
+								if err != nil && RUN_IN_TRANSACTION {
 									return result, err
+								} else if err != nil {
+									BUNDLE_OF_ERRORS = append(BUNDLE_OF_ERRORS, err.Error())
 								}
 							}
 						} else if arr, ok := data.([]interface{}); ok {
 							for _, item := range arr {
 								result, err = e(ctx, preprocessor(item))
-								if err != nil && !ignoreError {
+								if err != nil && RUN_IN_TRANSACTION {
 									return result, err
+								} else if err != nil {
+									BUNDLE_OF_ERRORS = append(BUNDLE_OF_ERRORS, err.Error())
 								}
 							}
 						}
-						return result, nil
+
+						if len(BUNDLE_OF_ERRORS) > 0 && !IGNORE_ERROR {
+							return result, errors.New(strings.Join(BUNDLE_OF_ERRORS, " || "))
+						} else {
+							return result, nil
+						}
 					}
 					var err error
-					if runAsync {
+					if RUN_ASYNCHRONOUSLY {
 						var wg sync.WaitGroup
 						wg.Add(1)
 						go func() {
-							if opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] {
-								if errTransaction := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+							if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
+								if ERROR_IN_TRANSACTION := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 									_, err := processor(ctx, resp)
 									if err != nil {
 										return err
 									}
 									return nil
-								}); errTransaction != nil {
-									err = errTransaction
+								}); ERROR_IN_TRANSACTION != nil {
+									BUNDLE_OF_ERRORS = append(BUNDLE_OF_ERRORS, ERROR_IN_TRANSACTION.Error())
 								}
 							} else {
 								_, err = processor(ctx, resp)
+								if err != nil {
+									BUNDLE_OF_ERRORS = append(BUNDLE_OF_ERRORS, err.Error())
+								}
 							}
 							wg.Done()
 						}()
 						wg.Wait()
-						if err != nil && !ignoreError {
-							return resp, err
+						if len(BUNDLE_OF_ERRORS) > 0 && !IGNORE_ERROR {
+							return resp, errors.New(strings.Join(BUNDLE_OF_ERRORS, " || "))
 						}
 
 					} else {
-						if opt[RUN_WITH_OPTION.RUN_WITH_TRANSACTION] {
-							var curr interface{}
+						var curr interface{}
+						if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 							err = kit.RunInTransaction(ctx, func(ctx context.Context) error {
 								result, err := processor(ctx, resp)
 								curr = result
 								return err
 							})
-							if err != nil && !ignoreError {
-								return curr, err
+							if err != nil {
+								BUNDLE_OF_ERRORS = append(BUNDLE_OF_ERRORS, err.Error())
 							}
 						} else {
-							if curr, err := processor(ctx, resp); err != nil && !ignoreError {
-								return curr, err
-							}
+							curr, err = processor(ctx, resp)
 						}
+						resp = curr
 					}
+				}
+				if len(BUNDLE_OF_ERRORS) > 0 && !IGNORE_ERROR {
+					return resp, errors.New(strings.Join(BUNDLE_OF_ERRORS, " || "))
 				}
 				return resp, nil
 			}
