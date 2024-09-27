@@ -33,10 +33,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 				tobeCached := make(map[string]interface{})
 				if mapExist, ok := existingCache.(map[string]interface{}); ok {
 					tobeCached = mapExist
-				} else if !ok {
-					tobeCached = map[string]interface{}{
-						"": existingCache,
-					}
 				}
 
 				response, err := e(ctx, preprocessor(req))

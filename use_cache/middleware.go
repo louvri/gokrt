@@ -21,12 +21,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 				tobeProcessed = cache
 				if exist, ok := cache.(map[string]interface{}); ok {
 					if key == "" {
-						for mapKey, val := range exist {
-							if mapKey == "" {
-								tobeProcessed = val
-								break
-							}
-						}
+						tobeProcessed = exist
 					} else if key != "" {
 						if tmp, ok := exist[key]; ok {
 							tobeProcessed = tmp
