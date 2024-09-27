@@ -7,14 +7,14 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, CACHE_KEY_STR ...string) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, cacheKey ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			response, err := next(ctx, req)
 			cache := ctx.Value(sys_key.CACHE_KEY)
 			var key string
-			if len(CACHE_KEY_STR) > 0 && CACHE_KEY_STR[0] != "" {
-				key = CACHE_KEY_STR[0]
+			if len(cacheKey) > 0 && cacheKey[0] != "" {
+				key = cacheKey[0]
 			}
 			if cache != nil && err == nil {
 				var tobeProcessed interface{}
