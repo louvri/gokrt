@@ -7,24 +7,33 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-var CACHE_KEY = "cache_data"
-
-func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, MULTIPLE_CACHE_STORED ...bool) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, CACHE_KEY_STR ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			response, err := next(ctx, req)
 			cache := ctx.Value(sys_key.CACHE_KEY)
+			var key string
+			if len(CACHE_KEY_STR) > 0 && CACHE_KEY_STR[0] != "" {
+				key = CACHE_KEY_STR[0]
+			}
 			if cache != nil && err == nil {
-				if cached, ok := cache.(map[string]interface{}); ok {
-					if len(MULTIPLE_CACHE_STORED) > 0 && MULTIPLE_CACHE_STORED[0] {
-						cache = cached
-					} else {
-						// let the middleware know if the cache is stored on multipled or not
-						cache = cached[CACHE_KEY]
+				var tobeProcessed interface{}
+				tobeProcessed = cache
+				if exist, ok := cache.(map[string]interface{}); ok {
+					if key == "" {
+						for mapKey, val := range exist {
+							if mapKey == "" {
+								tobeProcessed = val
+								break
+							}
+						}
+					} else if key != "" {
+						if tmp, ok := exist[key]; ok {
+							tobeProcessed = tmp
+						}
 					}
-
 				}
-				req = preprocessor(cache, response)
+				req = preprocessor(tobeProcessed, response)
 				if req != nil {
 					_, err := e(ctx, req)
 					if err != nil {

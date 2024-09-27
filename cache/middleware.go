@@ -7,27 +7,47 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-var CACHE_KEY = "cache_data"
-
-func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}, cacheKey ...string) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}, CACHE_KEY_STR ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			key := CACHE_KEY
-			cached := make(map[string]interface{})
-			if len(cacheKey) > 0 && cacheKey[0] != "" {
-				key = cacheKey[0]
+			existingCache := ctx.Value(sys_key.CACHE_KEY)
+			var key string
+			if len(CACHE_KEY_STR) > 0 && CACHE_KEY_STR[0] != "" {
+				key = CACHE_KEY_STR[0]
 			}
-			response, err := e(ctx, preprocessor(req))
-			if err != nil {
-				return nil, err
-			}
-			if ctx.Value(sys_key.CACHE_KEY) == nil {
-				cached[key] = response
-				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, cached)
-			} else {
-				if cached, ok := ctx.Value(sys_key.CACHE_KEY).(map[string]interface{}); ok && len(cached) > 0 {
-					cached[key] = response
-					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, cached)
+			if existingCache == nil && key == "" {
+				response, err := e(ctx, preprocessor(req))
+				if err != nil {
+					return nil, err
+				}
+				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
+			} else if existingCache == nil && key != "" {
+				response, err := e(ctx, preprocessor(req))
+				if err != nil {
+					return nil, err
+				}
+				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, map[string]interface{}{
+					key: response,
+				})
+			} else if existingCache != nil {
+				tobeCached := make(map[string]interface{})
+				if mapExist, ok := existingCache.(map[string]interface{}); ok {
+					tobeCached = mapExist
+				} else if !ok {
+					tobeCached = map[string]interface{}{
+						"": existingCache,
+					}
+				}
+
+				response, err := e(ctx, preprocessor(req))
+				if err != nil {
+					return nil, err
+				}
+				if key != "" {
+					tobeCached[key] = response
+					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, tobeCached)
+				} else if key == "" {
+					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
 				}
 			}
 			return next(ctx, req)
