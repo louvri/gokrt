@@ -86,7 +86,6 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 				text = strings.ReplaceAll(text, "\ufeff", "")
 				text = strings.ReplaceAll(text, "\xa0", " ")
 				text = strings.ReplaceAll(text, "\"", " ")
-				text = strings.ReplaceAll(text, " ;;;;;;;;", "")
 				text = strings.TrimSpace(text)
 				if first {
 					columns = strings.Split(text, splitter)
