@@ -77,7 +77,7 @@ func TestLoopArrayWithError(t *testing.T) {
 		loop_array.Middleware(
 			m.Executor, func(data interface{}) interface{} {
 				return data
-			}, func(data interface{}, err error) {
+			}, func(original, data interface{}, err error) {
 				// no op
 			},
 		),
@@ -101,7 +101,7 @@ func TestLoopArrayWithErrorAndIgnore(t *testing.T) {
 		loop_array.Middleware(
 			m.Executor, func(data interface{}) interface{} {
 				return data
-			}, func(data interface{}, err error) {
+			}, func(original, data interface{}, err error) {
 				// no op
 			},
 			option.RUN_WITH_ERROR,
@@ -134,7 +134,7 @@ func TestLoopRunInTransaction(t *testing.T) {
 	_, err = endpoint.Chain(
 		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
 			return data
-		}, func(data interface{}, err error) {
+		}, func(original, data interface{}, err error) {
 			// no op
 		}, option.RUN_IN_TRANSACTION),
 	)(func(context.Context, interface{}) (interface{}, error) {
@@ -172,7 +172,7 @@ func TestLoopRunInTransactionWithError(t *testing.T) {
 	_, err = endpoint.Chain(
 		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
 			return data
-		}, func(data interface{}, err error) {
+		}, func(original, data interface{}, err error) {
 
 		}, option.RUN_IN_TRANSACTION),
 	)(func(context.Context, interface{}) (interface{}, error) {
@@ -211,7 +211,7 @@ func TestLoopRunWithError(t *testing.T) {
 	_, err = endpoint.Chain(
 		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
 			return data
-		}, func(data interface{}, err error) {
+		}, func(original, data interface{}, err error) {
 			// no op
 		}),
 	)(func(context.Context, interface{}) (interface{}, error) {
