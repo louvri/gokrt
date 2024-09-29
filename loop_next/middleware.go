@@ -64,7 +64,7 @@ func Middleware(
 						ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
 						curr, err = next(ctx, modifiedReq)
 						if postprocessor != nil {
-							postprocessor(modifiedReq, curr, err)
+							postprocessor(req, curr, err)
 						}
 						if opt[RUN_OPTION.RUN_IN_TRANSACTION] && err != nil {
 							return nil, err

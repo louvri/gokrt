@@ -63,7 +63,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							for _, item := range arr {
 								result, err = e(ctx, preprocessor(item))
 								if postprocessor != nil {
-									postprocessor(preprocessor(item), result, err)
+									postprocessor(item, result, err)
 								}
 								if err != nil && RUN_IN_TRANSACTION {
 									return result, err
@@ -75,7 +75,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							for _, item := range arr {
 								result, err = e(ctx, preprocessor(item))
 								if postprocessor != nil {
-									postprocessor(preprocessor(item), result, err)
+									postprocessor(item, result, err)
 								}
 								if err != nil && RUN_IN_TRANSACTION {
 									return result, err
