@@ -11,6 +11,7 @@ import (
 	"github.com/louvri/gokrt/alter"
 	"github.com/louvri/gokrt/cache"
 	"github.com/louvri/gokrt/on_eof"
+	"github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
 	"github.com/louvri/gokrt/use_cache"
 )
@@ -118,12 +119,16 @@ func TestMultipleCacheAndUseCache(t *testing.T) {
 			return cache1, nil
 		}, func(req interface{}) interface{} {
 			return req
-		}, key1),
+		}, option.Config{
+			CacheKey: key1,
+		}),
 		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
 			return cache2, nil
 		}, func(req interface{}) interface{} {
 			return req
-		}, key2),
+		}, option.Config{
+			CacheKey: key2,
+		}),
 
 		use_cache.Middleware(
 			func(ctx context.Context, request interface{}) (response interface{}, err error) {
@@ -187,8 +192,9 @@ func TestMultipleCacheEmptyOneAndUseCache(t *testing.T) {
 			return cache2, nil
 		}, func(req interface{}) interface{} {
 			return req
-		}, key2),
-
+		}, option.Config{
+			CacheKey: key2,
+		}),
 		use_cache.Middleware(
 			func(ctx context.Context, request interface{}) (response interface{}, err error) {
 				return request, nil

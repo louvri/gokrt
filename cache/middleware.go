@@ -31,22 +31,18 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					}
 				}
 			}
-			execute := func(ctx context.Context, req interface{}, config map[option.Option]bool) (interface{}, error) {
-				if config[option.EXECUTE_AFTER] {
-					return next(ctx, preprocessor(req))
-				} else {
-					return e(ctx, preprocessor(req))
-				}
-			}
 
+			if len(cacheConfig) > 0 && cacheConfig[0].CacheKey != "" {
+				key = cacheConfig[0].CacheKey
+			}
 			if existingCache == nil && key == "" {
-				response, err := execute(ctx, preprocessor(req), config)
+				response, err := e(ctx, preprocessor(req))
 				if err != nil {
 					return nil, err
 				}
 				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
 			} else if existingCache == nil && key != "" {
-				response, err := execute(ctx, preprocessor(req), config)
+				response, err := e(ctx, preprocessor(req))
 				if err != nil {
 					return nil, err
 				}
@@ -59,7 +55,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					tobeCached = mapExist
 				}
 
-				response, err := execute(ctx, preprocessor(req), config)
+				response, err := e(ctx, preprocessor(req))
 				if err != nil {
 					return nil, err
 				}
@@ -70,7 +66,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
 				}
 			}
-			return execute(ctx, preprocessor(req), config)
+			return next(ctx, req)
 		}
 	}
 }
