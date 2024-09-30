@@ -30,17 +30,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 
 			var response interface{}
 			var err error
-
-			if config[option.EXECUTE_BEFORE] {
-				if e != nil {
-					response, err = e(ctx, req)
-				}
-			} else {
-				response, err = next(ctx, req)
-			}
 			cache := ctx.Value(sys_key.CACHE_KEY)
 
-			if cache != nil && err == nil {
+			if cache != nil {
 				var tobeProcessed interface{}
 				tobeProcessed = cache
 				if exist, ok := cache.(map[string]interface{}); ok {
@@ -52,12 +44,25 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 						}
 					}
 				}
-				req = preprocessor(tobeProcessed, response)
 				if req != nil {
 					if config[option.EXECUTE_BEFORE] {
-						_, err = next(ctx, req)
+						if e != nil {
+							response, err = e(ctx, req)
+						}
+						if err != nil {
+							return nil, err
+						}
+						req = preprocessor(tobeProcessed, response)
+						response, err = next(ctx, req)
 					} else {
-						_, err = e(ctx, req)
+						response, err = next(ctx, req)
+						if err != nil {
+							return nil, err
+						}
+						req = preprocessor(tobeProcessed, response)
+						if e != nil {
+							_, err = e(ctx, req)
+						}
 					}
 					if err != nil {
 						return nil, err
