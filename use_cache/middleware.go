@@ -47,25 +47,26 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 				if req != nil {
 					if config[option.EXECUTE_BEFORE] {
 						if e != nil {
-							response, err = e(ctx, req)
+							if response, err = e(ctx, req); err != nil {
+								return nil, err
+							}
 						}
-						if err != nil {
+
+						req = preprocessor(tobeProcessed, response)
+						if response, err = next(ctx, req); err != nil {
 							return nil, err
 						}
-						req = preprocessor(tobeProcessed, response)
-						response, err = next(ctx, req)
 					} else {
-						response, err = next(ctx, req)
-						if err != nil {
+						if response, err = next(ctx, req); err != nil {
 							return nil, err
 						}
 						req = preprocessor(tobeProcessed, response)
 						if e != nil {
-							_, err = e(ctx, req)
+							if _, err = e(ctx, req); err != nil {
+								return nil, err
+							}
+
 						}
-					}
-					if err != nil {
-						return nil, err
 					}
 				}
 			}
