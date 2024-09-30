@@ -4,25 +4,49 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}, cacheKey ...string) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}, cacheConfig ...option.Config) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			existingCache := ctx.Value(sys_key.CACHE_KEY)
 			var key string
-			if len(cacheKey) > 0 && cacheKey[0] != "" {
-				key = cacheKey[0]
+			config := map[option.Option]bool{}
+			if len(cacheConfig) > 0 {
+				if cacheConfig[0].CacheKey != "" {
+					key = cacheConfig[0].CacheKey
+				}
+
+				if len(cacheConfig[0].Option) > 0 {
+					for _, opt := range cacheConfig[0].Option {
+						if opt == option.EXECUTE_BEFORE {
+							config[option.EXECUTE_BEFORE] = true
+						}
+
+						if opt == option.EXECUTE_AFTER {
+							config[option.EXECUTE_AFTER] = true
+						}
+					}
+				}
 			}
+			execute := func(ctx context.Context, req interface{}, config map[option.Option]bool) (interface{}, error) {
+				if config[option.EXECUTE_AFTER] {
+					return next(ctx, preprocessor(req))
+				} else {
+					return e(ctx, preprocessor(req))
+				}
+			}
+
 			if existingCache == nil && key == "" {
-				response, err := e(ctx, preprocessor(req))
+				response, err := execute(ctx, preprocessor(req), config)
 				if err != nil {
 					return nil, err
 				}
 				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
 			} else if existingCache == nil && key != "" {
-				response, err := e(ctx, preprocessor(req))
+				response, err := execute(ctx, preprocessor(req), config)
 				if err != nil {
 					return nil, err
 				}
@@ -35,7 +59,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					tobeCached = mapExist
 				}
 
-				response, err := e(ctx, preprocessor(req))
+				response, err := execute(ctx, preprocessor(req), config)
 				if err != nil {
 					return nil, err
 				}
@@ -46,7 +70,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
 				}
 			}
-			return next(ctx, req)
+			return execute(ctx, preprocessor(req), config)
 		}
 	}
 }

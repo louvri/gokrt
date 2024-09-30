@@ -56,13 +56,13 @@ func Middleware(
 					var err error
 					var response interface{}
 					curr = make([]map[string]interface{}, 0)
-					modifiedReq := req
+					prevRequest := req
 					ctx = context.WithValue(ctx, sys_key.SOF, true)
 					for !comparator(prev, curr) {
-						modifiedReq := modifier(modifiedReq, curr)
+						currReq := modifier(prevRequest, curr)
 						prev = curr
 						ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
-						curr, err = next(ctx, modifiedReq)
+						curr, err = next(ctx, currReq)
 						if postprocessor != nil {
 							postprocessor(req, curr, err)
 						}
