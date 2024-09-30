@@ -211,3 +211,110 @@ func TestMultipleCacheEmptyOneAndUseCache(t *testing.T) {
 	}
 
 }
+
+func TestEmptyEndpointUseCache(t *testing.T) {
+	ctx := context.Background()
+	key1 := "key-1"
+	cache1 := "cache-1"
+	key2 := "key-2"
+	cache2 := "cache-2"
+
+	// request := make(map[string]interface{})
+	_, err := endpoint.Chain(
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache1, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, option.Config{
+			CacheKey: key1,
+		}),
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache2, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, option.Config{
+			CacheKey: key2,
+		}),
+		use_cache.Middleware(
+			nil, func(cache, next interface{}) interface{} {
+				return fmt.Sprintf("%v + %v", next, cache)
+			}, option.Config{
+				Option: []option.Option{option.EXECUTE_BEFORE},
+			},
+		),
+	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "main result", nil
+	})(ctx, "current request")
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+}
+
+func TestNotEmptyEndpointUseCache(t *testing.T) {
+	ctx := context.Background()
+	key1 := "key-1"
+	cache1 := "cache-1"
+	key2 := "key-2"
+	cache2 := "cache-2"
+
+	// request := make(map[string]interface{})
+	_, err := endpoint.Chain(
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache1, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, option.Config{
+			CacheKey: key1,
+		}),
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache2, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, option.Config{
+			CacheKey: key2,
+		}),
+		use_cache.Middleware(
+			func(ctx context.Context, request interface{}) (response interface{}, err error) {
+				return request, nil
+			}, func(cache, next interface{}) interface{} {
+				return fmt.Sprintf("%v + %v", next, cache)
+			},
+		),
+	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "main result", nil
+	})(ctx, "current request")
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+}
+
+func TestCacheAndUseCache(t *testing.T) {
+	ctx := context.Background()
+	cache1 := "cache-1"
+
+	// request := make(map[string]interface{})
+	_, err := endpoint.Chain(
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache1, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}),
+		use_cache.Middleware(
+			func(ctx context.Context, request interface{}) (response interface{}, err error) {
+				return request, nil
+			}, func(cache, next interface{}) interface{} {
+				return fmt.Sprintf("%v + %v", next, cache)
+			},
+		),
+	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "main result", nil
+	})(ctx, "current request")
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+}

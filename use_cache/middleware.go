@@ -21,10 +21,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 						if opt == option.EXECUTE_BEFORE {
 							config[option.EXECUTE_BEFORE] = true
 						}
-
-						if opt == option.FORBID_CURRENT_ENDPOINT_RUN {
-							config[option.FORBID_CURRENT_ENDPOINT_RUN] = true
-						}
 					}
 				}
 				if cacheConfig[0].CacheKey != "" {
@@ -35,11 +31,10 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 			var response interface{}
 			var err error
 
-			if config[option.EXECUTE_BEFORE] && !config[option.FORBID_CURRENT_ENDPOINT_RUN] {
-				response, err = e(ctx, req)
-			} else if config[option.FORBID_CURRENT_ENDPOINT_RUN] {
-				response = nil
-				err = nil
+			if config[option.EXECUTE_BEFORE] {
+				if e != nil {
+					response, err = e(ctx, req)
+				}
 			} else {
 				response, err = next(ctx, req)
 			}
