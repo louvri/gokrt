@@ -15,10 +15,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 			var key string
 			config := map[option.Option]bool{}
 			if len(cacheConfig) > 0 {
-				if cacheConfig[0].CacheKey != "" {
-					key = cacheConfig[0].CacheKey
-				}
-
+				key = cacheConfig[0].CacheKey
 				if len(cacheConfig[0].Option) > 0 {
 					for _, opt := range cacheConfig[0].Option {
 						if opt == option.EXECUTE_BEFORE {
@@ -32,9 +29,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 				}
 			}
 
-			if len(cacheConfig) > 0 && cacheConfig[0].CacheKey != "" {
-				key = cacheConfig[0].CacheKey
-			}
 			if existingCache == nil && key == "" {
 				response, err := e(ctx, preprocessor(req))
 				if err != nil {

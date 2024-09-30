@@ -318,3 +318,35 @@ func TestCacheAndUseCache(t *testing.T) {
 	}
 
 }
+
+func TestCacheAndUseCacheWithOptionsOnly(t *testing.T) {
+	ctx := context.Background()
+	cache1 := "cache-1"
+
+	// request := make(map[string]interface{})
+	_, err := endpoint.Chain(
+		cache.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return cache1, nil
+		}, func(req interface{}) interface{} {
+			return req
+		}, option.Config{
+			Option: []option.Option{option.EXECUTE_BEFORE},
+		}),
+		use_cache.Middleware(
+			func(ctx context.Context, request interface{}) (response interface{}, err error) {
+				return request, nil
+			}, func(cache, next interface{}) interface{} {
+				return fmt.Sprintf("%v + %v", next, cache)
+			}, option.Config{
+				Option: []option.Option{option.EXECUTE_BEFORE},
+			},
+		),
+	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+		return "main result", nil
+	})(ctx, "current request")
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+}
