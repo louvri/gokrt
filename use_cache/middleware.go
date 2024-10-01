@@ -46,13 +46,14 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 				}
 				if req != nil {
 					if config[option.EXECUTE_BEFORE] {
+						var curr interface{}
 						if e != nil {
-							if response, err = e(ctx, req); err != nil {
+							if curr, err = e(ctx, req); err != nil {
 								return nil, err
 							}
 						}
 
-						req = preprocessor(tobeProcessed, response)
+						req = preprocessor(tobeProcessed, curr)
 						if response, err = next(ctx, req); err != nil {
 							return nil, err
 						}
