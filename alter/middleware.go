@@ -34,11 +34,8 @@ func Middleware(
 			}
 			var original interface{}
 			var err error
-			if opt[RUN_WITH_OPTION.EXECUTE_BEFORE] {
-				original, err = e(ctx, req)
-			} else {
-				original, err = next(ctx, req)
-			}
+			original, err = next(ctx, req)
+
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
 			if original != nil && (err == nil || runOnError) {
 				result := preprocessor(original, err)
@@ -49,21 +46,12 @@ func Middleware(
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							if opt[RUN_WITH_OPTION.EXECUTE_BEFORE] {
-								altered, err = next(ctx, req)
-							} else {
-								altered, err = e(ctx, req)
-							}
+							altered, err = e(ctx, req)
 						}()
 						wg.Wait()
 						return postprocessor(original, altered, err)
 					} else {
-
-						if opt[RUN_WITH_OPTION.EXECUTE_BEFORE] {
-							original, err = next(ctx, req)
-						} else {
-							altered, err = e(ctx, result)
-						}
+						altered, err = e(ctx, result)
 						return postprocessor(original, altered, err)
 					}
 
