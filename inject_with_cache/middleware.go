@@ -14,11 +14,16 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache, data interface{}) 
 			var cache, response, curr interface{}
 			var err error
 			cache = ctx.Value(sys_key.CACHE_KEY)
-
+			config := map[option.Option]bool{}
 			key := ""
 			if len(cacheOption) > 0 {
 				if cacheOption[0].CacheKey != "" {
 					key = cacheOption[0].CacheKey
+				}
+				if len(cacheOption[0].Option) > 0 {
+					for _, opt := range cacheOption[0].Option {
+						config[opt] = true
+					}
 				}
 			}
 
@@ -33,10 +38,10 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache, data interface{}) 
 			}
 
 			curr = preprocessor(cache, req)
-			if e != nil {
-				response, err = e(ctx, curr)
-			}
-			if err != nil {
+
+			response, err = e(ctx, curr)
+
+			if err != nil && !config[option.RUN_WITH_ERROR] {
 				return nil, err
 			}
 
