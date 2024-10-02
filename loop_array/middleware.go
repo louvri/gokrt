@@ -11,7 +11,7 @@ import (
 	"github.com/louvri/gosl"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, postprocessor func(original, data interface{}, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
@@ -62,6 +62,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						if arr, ok := data.([]map[string]interface{}); ok {
 							for _, item := range arr {
 								result, err = e(ctx, preprocessor(item))
+								if postprocessor != nil {
+									postprocessor(item, result, err)
+								}
 								if err != nil && RUN_IN_TRANSACTION {
 									return result, err
 								} else if err != nil {
@@ -71,6 +74,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						} else if arr, ok := data.([]interface{}); ok {
 							for _, item := range arr {
 								result, err = e(ctx, preprocessor(item))
+								if postprocessor != nil {
+									postprocessor(item, result, err)
+								}
 								if err != nil && RUN_IN_TRANSACTION {
 									return result, err
 								} else if err != nil {

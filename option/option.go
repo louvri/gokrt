@@ -7,3 +7,8 @@ var RUN_ASYNC Option = "RUN ASYNC"
 var EXECUTE_AFTER Option = "EXECUTE AFTER"
 var EXECUTE_BEFORE Option = "EXECUTE BEFORE"
 var RUN_IN_TRANSACTION Option = "RUN IN TRANSACTION"
+
+type Config struct {
+	CacheKey string
+	Option   []Option
+}

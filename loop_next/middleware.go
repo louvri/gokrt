@@ -18,6 +18,7 @@ import (
 func Middleware(
 	comparator func(prev, curr interface{}) bool,
 	modifier func(req interface{}, next interface{}) interface{},
+	postprocessor func(original, data interface{}, err error),
 	opts ...RUN_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -55,13 +56,16 @@ func Middleware(
 					var err error
 					var response interface{}
 					curr = make([]map[string]interface{}, 0)
-					modifiedReq := req
+					prevRequest := req
 					ctx = context.WithValue(ctx, sys_key.SOF, true)
 					for !comparator(prev, curr) {
-						modifiedReq := modifier(modifiedReq, curr)
+						currReq := modifier(prevRequest, curr)
 						prev = curr
 						ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
-						curr, err = next(ctx, modifiedReq)
+						curr, err = next(ctx, currReq)
+						if postprocessor != nil {
+							postprocessor(req, curr, err)
+						}
 						if opt[RUN_OPTION.RUN_IN_TRANSACTION] && err != nil {
 							return nil, err
 						} else if err != nil {

@@ -29,6 +29,8 @@ func TestLoopNextNotIgnoreError(t *testing.T) {
 			return comparator
 		}, func(req, next interface{}) interface{} {
 			return tmpIndex
+		}, func(original, data interface{}, err error) {
+			// no op
 		}),
 		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
 			if data != nil && err == nil {
@@ -52,6 +54,8 @@ func TestLoopNext(t *testing.T) {
 			return comparator
 		}, func(req, next interface{}) interface{} {
 			return m.GetCounter()
+		}, func(original, data interface{}, err error) {
+			// no op
 		}, option.RUN_WITH_ERROR),
 		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
 			if data != nil && err == nil {
@@ -92,9 +96,9 @@ func TestRunTransaction(t *testing.T) {
 		}, func(req, next interface{}) interface{} {
 			res := m.GetCounter()
 			return res
-		},
-		// option.RUN_IN_TRANSACTION,
-		),
+		}, func(original, data interface{}, err error) {
+			// no op
+		}),
 		after.Middleware(
 			mDB.Upsert, func(data interface{}, err error) interface{} {
 				if data != nil && err == nil {
