@@ -8,7 +8,7 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, postprocessor func(originalRequest, cache, currentResponse interface{}) interface{}, cacheOption ...option.Config) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, cacheOption ...option.Config) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 
@@ -39,15 +39,12 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 				}
 			}
 
-			tobeProcess := preprocessor(cache, req)
-			response, err = next(ctx, tobeProcess)
-
+			req = preprocessor(cache, req)
+			response, err = next(ctx, req)
 			if err != nil && !config[option.RUN_WITH_ERROR] {
 				return response, err
 			}
-
-			tobeProcess = postprocessor(req, cache, response)
-			return e(ctx, tobeProcess)
+			return e(ctx, response)
 		}
 	}
 }

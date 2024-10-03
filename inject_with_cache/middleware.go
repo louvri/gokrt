@@ -8,11 +8,11 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(cache, data interface{}) interface{}, postprocessor func(cache, original, data interface{}, err error) interface{}, cacheOption ...option.Config) endpoint.Middleware {
+func Middleware(preprocessor func(cache, data interface{}) interface{}, cacheOption ...option.Config) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			var cache, response, curr interface{}
-			var err error
+			var cache interface{}
+
 			cache = ctx.Value(sys_key.CACHE_KEY)
 			config := map[option.Option]bool{}
 			key := ""
@@ -36,16 +36,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache, data interface{}) 
 					}
 				}
 			}
-
-			curr = preprocessor(cache, req)
-
-			response, err = e(ctx, curr)
-
-			if err != nil && !config[option.RUN_WITH_ERROR] {
-				return nil, err
-			}
-
-			req = postprocessor(cache, curr, response, err)
+			req = preprocessor(cache, req)
 			return next(ctx, req)
 		}
 	}
