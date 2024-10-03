@@ -84,16 +84,6 @@ func TestAlterWithCache(t *testing.T) {
 					}
 				}
 				return nil
-			},
-			func(originalRequest, cache, currentResponse interface{}) interface{} {
-				if request, ok := originalRequest.(Data); ok {
-					if cached, ok := cache.(map[string]interface{}); ok {
-						request.Cache = cached
-					}
-					request.Response = currentResponse.(string)
-					return request
-				}
-				return nil
 			}),
 	)(m.Main)(context.Background(), Data{
 		Request: "request",

@@ -5,6 +5,7 @@ go 1.21
 require (
 	cloud.google.com/go/storage v1.39.0
 	github.com/go-kit/kit v0.13.0
+	github.com/jmoiron/sqlx v1.3.5
 	github.com/louvri/gosl v0.0.33
 	github.com/redis/go-redis/v9 v9.5.1
 	google.golang.org/api v0.166.0
@@ -27,7 +28,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.1 // indirect
-	github.com/jmoiron/sqlx v1.3.5 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.48.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.48.0 // indirect

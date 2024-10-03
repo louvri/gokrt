@@ -57,17 +57,11 @@ func TestAlterCache(t *testing.T) {
 		cache.Middleware(m.First, func(req interface{}) interface{} {
 			return nil
 		}),
-		inject_with_cache.Middleware(m.Alter, func(cache, data interface{}) interface{} {
+		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
 			if data == nil {
 				return fmt.Sprintf("%s + %s", cache.(string), data.(string))
 			}
 			return fmt.Sprintf("%s + %s", cache.(string), data.(string))
-		}, func(cache, original, data interface{}, err error) interface{} {
-			return map[string]interface{}{
-				"cache":    cache,
-				"original": original,
-				"data":     data,
-			}
 		}),
 	)(m.Main)(context.Background(), "request")
 	if err != nil {
@@ -109,16 +103,10 @@ func TestAlterMultipleCache(t *testing.T) {
 		}, option.Config{
 			CacheKey: "cache-2",
 		}),
-		inject_with_cache.Middleware(m.Alter, func(cache, data interface{}) interface{} {
+		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
 			tobeProcessed := cache.(map[string]interface{})
 			tobeProcessed["preprocess"] = data
 			return tobeProcessed
-		}, func(cache, original, data interface{}, err error) interface{} {
-			return map[string]interface{}{
-				"cache":    cache,
-				"original": original,
-				"data":     data,
-			}
 		}),
 	)(m.Main)(context.Background(), "request")
 	if err != nil {
