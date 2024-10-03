@@ -9,13 +9,12 @@ import (
 
 func Middleware(
 	e endpoint.Endpoint,
-	preprocessor func(data interface{}) interface{},
-	postprocessor func(original interface{}, data interface{}, err error) (interface{}, error),
+	modifier func(original interface{}, data interface{}, err error) (interface{}, error),
 	opts ...option.Option,
 ) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			var response, original interface{}
+			var response, modified interface{}
 			var err error
 			config := map[option.Option]bool{}
 			if len(opts) > 0 {
@@ -23,18 +22,18 @@ func Middleware(
 					config[opt] = true
 				}
 			}
-			original = preprocessor(req)
 
-			response, err = e(ctx, original)
+			response, err = e(ctx, req)
 			if err != nil && config[option.RUN_WITH_ERROR] {
 				return nil, err
 			}
 
-			req, err = postprocessor(original, response, err)
+			modified, err = modifier(req, response, err)
 			if err != nil && config[option.RUN_WITH_ERROR] {
 				return nil, err
 			}
-			return next(ctx, req)
+
+			return next(ctx, modified)
 		}
 	}
 }
