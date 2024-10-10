@@ -54,15 +54,15 @@ func TestHappyCaseAlter(t *testing.T) {
 		after.Middleware(m.First, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}),
+		}, nil),
 		after.Middleware(m.Second, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}),
+		}, nil),
 		after.Middleware(m.Third, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}),
+		}, nil),
 	)(m.Main)(context.Background(), "")
 	if result, ok := resp.(string); ok {
 		if result != EXPECTED_RESULT {
@@ -78,15 +78,15 @@ func TestNotStopWithError(t *testing.T) {
 		after.Middleware(m.First, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}),
+		}, nil),
 		after.Middleware(m.Second, func(data interface{}, err error) interface{} {
 			t.Log(err)
 			return err
-		}),
+		}, nil),
 		after.Middleware(m.Error, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}, RUN_WITH_OPTION.RUN_WITH_ERROR),
+		}, nil, RUN_WITH_OPTION.RUN_WITH_ERROR),
 	)(m.Main)(context.Background(), "")
 	if result, ok := resp.(string); ok {
 		if result != EXPECTED_RESULT {
@@ -102,15 +102,15 @@ func TestStopWithError(t *testing.T) {
 		after.Middleware(m.First, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}),
+		}, nil),
 		after.Middleware(m.Second, func(data interface{}, err error) interface{} {
 			t.Log(err)
 			return err
-		}),
+		}, nil),
 		after.Middleware(m.Error, func(data interface{}, err error) interface{} {
 			t.Log(data)
 			return data
-		}),
+		}, nil),
 	)(m.Error)(context.Background(), "")
 	if result, ok := resp.(string); ok {
 		if result != ErrFoo.Error() {

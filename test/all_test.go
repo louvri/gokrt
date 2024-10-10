@@ -29,6 +29,7 @@ func TestAfter(t *testing.T) {
 		func(data interface{}, err error) interface{} {
 			return data
 		},
+		nil,
 	))(func(ctx context.Context, req interface{}) (interface{}, error) {
 		a := 0
 		for i := 0; i < 10000; i++ {
@@ -64,6 +65,7 @@ func TestOnEof(t *testing.T) {
 				func(data interface{}, err error) interface{} {
 					return data
 				},
+				nil,
 			),
 		),
 	)(func(ctx context.Context, req interface{}) (interface{}, error) {
@@ -95,7 +97,7 @@ func TestOnEofWhileError(t *testing.T) {
 	)(func(ctx context.Context, req interface{}) (interface{}, error) {
 		return "satu", nil
 	})(ctx, -1)
-	if response.(string) == "hello world" {
+	if response.(string) != "hello world" {
 		t.Fatal("wrong result")
 	}
 	if err != nil {

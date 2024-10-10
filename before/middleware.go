@@ -6,15 +6,31 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	icontext "github.com/louvri/gokrt/icontext"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, wait ...bool) endpoint.Middleware {
+func Middleware(
+	e endpoint.Endpoint,
+	preprocessor func(data interface{}) interface{},
+	postprocessor func(data interface{}, err error),
+	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			result := preprocessor(req)
+			opt := make(map[RUN_WITH_OPTION.Option]bool)
+			for _, option := range opts {
+				switch option {
+				case RUN_WITH_OPTION.RUN_ASYNC_WAIT:
+					opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] = true
+				}
+			}
+			var result interface{}
+			if preprocessor != nil {
+				result = preprocessor(req)
+			} else {
+				result = req
+			}
 			if result != nil {
-				nwait := len(wait)
-				if nwait > 0 && wait[0] {
+				if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
@@ -29,8 +45,11 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					go e(ctx, result)
 				}
 			}
-
-			return next(ctx, req)
+			response, err := next(ctx, req)
+			if postprocessor != nil {
+				postprocessor(response, err)
+			}
+			return response, err
 		}
 	}
 }

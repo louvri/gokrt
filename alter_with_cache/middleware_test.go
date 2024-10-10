@@ -9,7 +9,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/alter_with_cache"
 	"github.com/louvri/gokrt/cache"
-	"github.com/louvri/gokrt/option"
 )
 
 type Mock interface {
@@ -67,14 +66,10 @@ func TestAlterWithCache(t *testing.T) {
 	result, err := endpoint.Chain(
 		cache.Middleware(m.First, func(req interface{}) interface{} {
 			return nil
-		}, option.Config{
-			CacheKey: "key-1",
-		}),
+		}, "key-1"),
 		cache.Middleware(m.Third, func(req interface{}) interface{} {
 			return nil
-		}, option.Config{
-			CacheKey: "key-2",
-		}),
+		}, "key-2"),
 		alter_with_cache.Middleware(m.Alter,
 			func(cache, next interface{}) interface{} {
 				if tobeProcessed, ok := next.(Data); ok {

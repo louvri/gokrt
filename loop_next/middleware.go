@@ -26,16 +26,14 @@ func Middleware(
 			BUNDLE_OF_ERRORS := make([]string, 0)
 			for _, option := range opts {
 				switch option {
-				case RUN_OPTION.RUN_ASYNC:
-					opt[RUN_OPTION.RUN_ASYNC] = true
+				case RUN_OPTION.RUN_ASYNC_WAIT:
+					opt[RUN_OPTION.RUN_ASYNC_WAIT] = true
 					continue
 				case RUN_OPTION.RUN_WITH_ERROR:
 					opt[RUN_OPTION.RUN_WITH_ERROR] = true
 					continue
 				case RUN_OPTION.EXECUTE_AFTER:
 					opt[RUN_OPTION.EXECUTE_AFTER] = true
-				case RUN_OPTION.EXECUTE_BEFORE:
-					opt[RUN_OPTION.EXECUTE_BEFORE] = true
 				case RUN_OPTION.RUN_IN_TRANSACTION:
 					opt[RUN_OPTION.RUN_IN_TRANSACTION] = true
 				default:
@@ -96,7 +94,7 @@ func Middleware(
 
 				}
 
-				if opt[RUN_OPTION.RUN_ASYNC] {
+				if opt[RUN_OPTION.RUN_ASYNC_WAIT] {
 					var response interface{}
 					var err error
 					var wg sync.WaitGroup

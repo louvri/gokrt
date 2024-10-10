@@ -37,7 +37,7 @@ func TestLoopNextNotIgnoreError(t *testing.T) {
 				return data
 			}
 			return err
-		}),
+		}, nil),
 	)(m.Main)(context.Background(), tmpIndex)
 	if err != nil {
 		t.Log(err.Error())
@@ -62,7 +62,7 @@ func TestLoopNext(t *testing.T) {
 				return data
 			}
 			return err
-		}, option.RUN_WITH_ERROR),
+		}, nil, option.RUN_WITH_ERROR),
 	)(m.Main)(context.Background(), m.GetCounter())
 	if err == nil {
 		t.Log("should error")
@@ -106,7 +106,8 @@ func TestRunTransaction(t *testing.T) {
 				}
 				return err
 			},
-			option.RUN_ASYNC,
+			nil,
+			option.RUN_ASYNC_WAIT,
 		),
 	)(m.Main)(ctx, tmpIndex)
 	if err != nil {
