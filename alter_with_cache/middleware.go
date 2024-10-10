@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
 )
 
@@ -14,7 +13,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 			var cache, response interface{}
 			var err error
 			cache = ctx.Value(sys_key.CACHE_KEY)
-			config := map[option.Option]bool{}
 			id := ""
 			if len(key) > 0 {
 				id = key[0]
@@ -30,7 +28,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next i
 			}
 			req = preprocessor(cache, req)
 			response, err = next(ctx, req)
-			if err != nil && !config[option.RUN_WITH_ERROR] {
+			if err != nil {
 				return response, err
 			}
 			return e(ctx, response)

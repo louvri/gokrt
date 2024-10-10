@@ -27,7 +27,7 @@ func Middleware(
 			}
 			resp, err := next(ctx, req)
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
-			if resp != nil && (err == nil || runOnError) {
+			if runOnError || err == nil {
 				result := preprocessor(resp, err)
 				if result != nil {
 					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
