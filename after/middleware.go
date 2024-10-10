@@ -35,6 +35,9 @@ func Middleware(
 						wg.Add(1)
 						go func() {
 							e(ctx, result)
+							if postprocessor != nil {
+								postprocessor(resp, err)
+							}
 							wg.Done()
 						}()
 						wg.Wait()
@@ -42,13 +45,16 @@ func Middleware(
 						if _, ok := ctx.(*icontext.CopyContext); !ok {
 							ctx = icontext.New(ctx)
 						}
-						go e(ctx, result)
+						go func() {
+							e(ctx, result)
+							if postprocessor != nil {
+								postprocessor(resp, err)
+							}
+						}()
 					}
 				}
 			}
-			if postprocessor != nil {
-				postprocessor(resp, err)
-			}
+
 			return resp, err
 		}
 	}
