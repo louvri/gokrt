@@ -48,7 +48,7 @@ func Middleware(
 			curr = make([]map[string]interface{}, 0)
 			prevRequest := req
 
-			run := func(data interface{}) (interface{}, error) {
+			run := func(ctx context.Context) (interface{}, error) {
 				inner := func() (interface{}, error) {
 					currReq := modifier(prevRequest, curr)
 					prev = curr
@@ -92,9 +92,43 @@ func Middleware(
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil {
 				return next(ctx, nil)
-			} else {
-
 			}
+
+			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
+				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+					for !comparator(prev, curr) {
+						response, err = run(ctx)
+						if err != nil {
+							return err
+						}
+					}
+					ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+					if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
+						return eofErr
+					} else {
+						response = eofResponse
+						return nil
+					}
+
+				}); err != nil {
+					return nil, err
+				}
+				return response, nil
+			}
+
+			for !comparator(prev, curr) {
+				response, err = run(ctx)
+				if err != nil {
+					return nil, err
+				}
+			}
+			ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+			if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
+				return nil, eofErr
+			} else {
+				response = eofResponse
+			}
+			return response, err
 		}
 	}
 }

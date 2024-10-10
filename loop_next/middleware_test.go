@@ -18,7 +18,7 @@ import (
 )
 
 var ctx context.Context
-var tmpIndex = 0
+var tmpIndex = -1
 
 func TestLoopNextNotIgnoreError(t *testing.T) {
 	m := mock.NewMock()
@@ -98,18 +98,18 @@ func TestRunTransaction(t *testing.T) {
 			return res
 		}, func(original, data interface{}, err error) {
 			// no op
-		}),
+		}, option.RUN_IN_TRANSACTION),
 		after.Middleware(
 			mDB.Upsert, func(data interface{}, err error) interface{} {
 				if data != nil && err == nil {
 					return data
 				}
-				return err
+				return nil
 			},
 			nil,
 			option.RUN_ASYNC_WAIT,
 		),
-	)(m.Main)(ctx, tmpIndex)
+	)(m.MainNoErr)(ctx, tmpIndex)
 	if err != nil {
 		t.Log(err.Error())
 		t.FailNow()

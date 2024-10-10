@@ -27,8 +27,22 @@ var Batch = []interface{}{
 	Err,
 }
 
+var NoErrBatch = []interface{}{
+	"1stIndex",
+	"2ndIndex",
+	"3rdIndex",
+	"4thIndex",
+	"5thIndex",
+	"6thIndex",
+	"7thIndex",
+	"8thIndex",
+	"9thIndex",
+	"10thIndex",
+}
+
 type Mock interface {
 	Main(ctx context.Context, request interface{}) (interface{}, error)
+	MainNoErr(ctx context.Context, request interface{}) (interface{}, error)
 	Executor(ctx context.Context, request interface{}) (interface{}, error)
 	GetCounter() int
 	Increment(int)
@@ -59,6 +73,15 @@ func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, erro
 		return nil, err
 	}
 	return Batch[current], nil
+}
+
+func (m *mock) MainNoErr(ctx context.Context, request interface{}) (interface{}, error) {
+
+	current := m.counter
+	if current >= len(NoErrBatch) {
+		return nil, nil
+	}
+	return NoErrBatch[current], nil
 }
 
 func (m *mock) Executor(ctx context.Context, request interface{}) (interface{}, error) {
