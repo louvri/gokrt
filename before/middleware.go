@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
-	icontext "github.com/louvri/gokrt/icontext"
+	"github.com/louvri/gokrt/icontext"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
 
@@ -30,6 +30,9 @@ func Middleware(
 				result = req
 			}
 			if result != nil {
+				if _, ok := ctx.(*icontext.CopyContext); !ok {
+					ctx = icontext.New(ctx)
+				}
 				if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
 					var wg sync.WaitGroup
 					wg.Add(1)
@@ -42,9 +45,6 @@ func Middleware(
 					}()
 					wg.Wait()
 				} else {
-					if _, ok := ctx.(*icontext.CopyContext); !ok {
-						ctx = icontext.New(ctx)
-					}
 					go func() {
 						postdata, err := e(ctx, result)
 						if postprocessor != nil {
