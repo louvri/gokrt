@@ -34,7 +34,10 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
-						e(ctx, result)
+						postdata, err := e(ctx, result)
+						if postprocessor != nil {
+							postprocessor(postdata, err)
+						}
 						wg.Done()
 					}()
 					wg.Wait()
@@ -42,14 +45,15 @@ func Middleware(
 					if _, ok := ctx.(*icontext.CopyContext); !ok {
 						ctx = icontext.New(ctx)
 					}
-					go e(ctx, result)
+					go func() {
+						postdata, err := e(ctx, result)
+						if postprocessor != nil {
+							postprocessor(postdata, err)
+						}
+					}()
 				}
 			}
-			response, err := next(ctx, req)
-			if postprocessor != nil {
-				postprocessor(response, err)
-			}
-			return response, err
+			return next(ctx, req)
 		}
 	}
 }
