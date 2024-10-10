@@ -54,7 +54,7 @@ func Middleware(
 					prev = curr
 					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
 					curr, err = next(ctx, currReq)
-
+					response = curr
 					if err != nil {
 						ctx = context.WithValue(ctx, sys_key.EOF, "err")
 						errors = append(errors, err.Error())
