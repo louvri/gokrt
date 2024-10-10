@@ -10,7 +10,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/cache"
 	"github.com/louvri/gokrt/inject_with_cache"
-	"github.com/louvri/gokrt/option"
 )
 
 type Mock interface {
@@ -59,7 +58,7 @@ func TestAlterCache(t *testing.T) {
 		}),
 		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
 			if data == nil {
-				return fmt.Sprintf("%s + %s", cache.(string), data.(string))
+				return cache.(string)
 			}
 			return fmt.Sprintf("%s + %s", cache.(string), data.(string))
 		}),
@@ -95,14 +94,10 @@ func TestAlterMultipleCache(t *testing.T) {
 	resp, err := endpoint.Chain(
 		cache.Middleware(m.First, func(req interface{}) interface{} {
 			return nil
-		}, option.Config{
-			CacheKey: "cache-1",
-		}),
+		}, "cache-1"),
 		cache.Middleware(m.Third, func(req interface{}) interface{} {
 			return nil
-		}, option.Config{
-			CacheKey: "cache-2",
-		}),
+		}, "cache-2"),
 		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
 			tobeProcessed := cache.(map[string]interface{})
 			tobeProcessed["preprocess"] = data

@@ -18,16 +18,14 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 			var IGNORE_ERROR, RUN_ASYNCHRONOUSLY bool
 			for _, option := range opts {
 				switch option {
-				case RUN_WITH_OPTION.RUN_ASYNC:
-					opt[RUN_WITH_OPTION.RUN_ASYNC] = true
+				case RUN_WITH_OPTION.RUN_ASYNC_WAIT:
+					opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] = true
 					continue
 				case RUN_WITH_OPTION.RUN_WITH_ERROR:
 					opt[RUN_WITH_OPTION.RUN_WITH_ERROR] = true
 					continue
 				case RUN_WITH_OPTION.EXECUTE_AFTER:
 					opt[RUN_WITH_OPTION.EXECUTE_AFTER] = true
-				case RUN_WITH_OPTION.EXECUTE_BEFORE:
-					opt[RUN_WITH_OPTION.EXECUTE_BEFORE] = true
 				case RUN_WITH_OPTION.RUN_IN_TRANSACTION:
 					opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] = true
 				default:
@@ -43,7 +41,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 				kit = gosl.New(ctx)
 			}
 
-			if tmp, ok := opt[RUN_WITH_OPTION.RUN_ASYNC]; ok && RUN_ASYNCHRONOUSLY {
+			if tmp, ok := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; ok && RUN_ASYNCHRONOUSLY {
 				RUN_ASYNCHRONOUSLY = tmp
 			}
 
