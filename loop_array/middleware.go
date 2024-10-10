@@ -50,7 +50,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						if postprocessor != nil {
 							postprocessor(data, resp, err)
 						}
-						return resp, err
+						return resp, nil
 					}
 					if opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] {
 						var response interface{}
