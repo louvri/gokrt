@@ -30,6 +30,9 @@ func Middleware(
 			if runOnError || err == nil {
 				result := preprocessor(resp, err)
 				if result != nil {
+					if _, ok := ctx.(*icontext.CopyContext); !ok {
+						ctx = icontext.New(ctx)
+					}
 					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
 						var wg sync.WaitGroup
 						wg.Add(1)
@@ -42,9 +45,6 @@ func Middleware(
 						}()
 						wg.Wait()
 					} else {
-						if _, ok := ctx.(*icontext.CopyContext); !ok {
-							ctx = icontext.New(ctx)
-						}
 						go func() {
 							e(ctx, result)
 							if postprocessor != nil {
