@@ -79,13 +79,12 @@ func Middleware(
 					wg.Add(1)
 					go func() {
 						response, err = inner(ctx)
-						ctx = context.WithValue(ctx, sys_key.SOF, false)
+
 						wg.Done()
 					}()
 					wg.Wait()
 					return response, err
 				}
-				ctx = context.WithValue(ctx, sys_key.SOF, false)
 				return inner(ctx)
 			}
 
@@ -99,6 +98,7 @@ func Middleware(
 				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
 						response, err = run(ctx)
+						ctx = context.WithValue(ctx, sys_key.SOF, false)
 						if err != nil {
 							return err
 						}
@@ -119,6 +119,7 @@ func Middleware(
 
 			for !comparator(prev, curr) {
 				response, err = run(ctx)
+				ctx = context.WithValue(ctx, sys_key.SOF, false)
 				if err != nil {
 					return nil, err
 				}
