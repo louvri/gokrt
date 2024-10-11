@@ -48,8 +48,8 @@ func Middleware(
 			curr = make([]map[string]interface{}, 0)
 			prevRequest := req
 
-			run := func(ctx context.Context) (interface{}, error) {
-				inner := func(ctx context.Context) (interface{}, error) {
+			run := func() (interface{}, error) {
+				inner := func() (interface{}, error) {
 					currReq := modifier(prevRequest, curr)
 					prev = curr
 					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
@@ -78,14 +78,14 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
-						response, err = inner(ctx)
+						response, err = inner()
 
 						wg.Done()
 					}()
 					wg.Wait()
 					return response, err
 				}
-				return inner(ctx)
+				return inner()
 			}
 
 			ctx = context.WithValue(ctx, sys_key.SOF, true)
@@ -97,7 +97,7 @@ func Middleware(
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
-						response, err = run(ctx)
+						response, err = run()
 						ctx = context.WithValue(ctx, sys_key.SOF, false)
 						if err != nil {
 							return err
@@ -118,7 +118,7 @@ func Middleware(
 			}
 
 			for !comparator(prev, curr) {
-				response, err = run(ctx)
+				response, err = run()
 				ctx = context.WithValue(ctx, sys_key.SOF, false)
 				if err != nil {
 					return nil, err
