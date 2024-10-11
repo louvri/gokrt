@@ -49,7 +49,7 @@ func Middleware(
 			prevRequest := req
 
 			run := func(ctx context.Context) (interface{}, error) {
-				inner := func() (interface{}, error) {
+				inner := func(ctx context.Context) (interface{}, error) {
 					currReq := modifier(prevRequest, curr)
 					prev = curr
 					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
@@ -68,7 +68,6 @@ func Middleware(
 						postprocessor(req, curr, err)
 					}
 
-					ctx = context.WithValue(ctx, sys_key.SOF, false)
 					time.Sleep(0)
 					return response, nil
 				}
@@ -79,13 +78,15 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
-						response, err = inner()
+						response, err = inner(ctx)
+						ctx = context.WithValue(ctx, sys_key.SOF, false)
 						wg.Done()
 					}()
 					wg.Wait()
 					return response, err
 				}
-				return inner()
+				ctx = context.WithValue(ctx, sys_key.SOF, false)
+				return inner(ctx)
 			}
 
 			ctx = context.WithValue(ctx, sys_key.SOF, true)
