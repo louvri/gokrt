@@ -28,7 +28,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 				}
 			}
 			var kit gosl.Kit
-			errors := make([]string, 0)
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				kit = gosl.New(ctx)
 			}
@@ -47,13 +46,11 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						resp, err := e(ctx, req)
 						if err != nil && !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 							return nil, err
-						} else if err != nil {
-							errors = append(errors, err.Error())
 						}
 						if postprocessor != nil {
 							postprocessor(data, resp, err)
 						}
-						return resp, err
+						return resp, nil
 					}
 					if opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] {
 						var response interface{}

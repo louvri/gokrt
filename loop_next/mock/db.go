@@ -32,6 +32,9 @@ func NewMockDB(db *sqlx.DB) MockDB {
 
 func (m *mockDB) Upsert(ctx context.Context, request interface{}) (interface{}, error) {
 	var tobeInsert string
+	if request == nil {
+		return nil, nil
+	}
 	if tmp, ok := request.(string); ok {
 		tobeInsert = tmp
 	} else if tmp, ok := request.(error); ok {
