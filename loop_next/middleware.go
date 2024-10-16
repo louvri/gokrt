@@ -46,10 +46,12 @@ func Middleware(
 			var err error
 			var response interface{}
 			curr = make([]map[string]interface{}, 0)
+			errorCollection := make([]map[string]interface{}, 0)
+
 			prevRequest := req
 
-			run := func() (interface{}, error) {
-				inner := func() (interface{}, error) {
+			run := func(index int) (interface{}, error) {
+				inner := func(index int) (interface{}, error) {
 					currReq := modifier(prevRequest, curr)
 					prev = curr
 					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
@@ -59,8 +61,14 @@ func Middleware(
 						ctx = context.WithValue(ctx, sys_key.EOF, "err")
 						errors = append(errors, err.Error())
 						response, err = next(ctx, nil)
-						if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
-							return nil, err
+						if err != nil {
+							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
+								return nil, err
+							}
+							errorCollection = append(errorCollection, map[string]interface{}{
+								"error": err,
+								"index": index,
+							})
 						}
 					}
 
@@ -78,13 +86,13 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
-						response, err = inner()
+						response, err = inner(index)
 						wg.Done()
 					}()
 					wg.Wait()
 					return response, err
 				}
-				return inner()
+				return inner(index)
 			}
 
 			ctx = context.WithValue(ctx, sys_key.SOF, true)
@@ -93,10 +101,12 @@ func Middleware(
 				return next(ctx, nil)
 			}
 
+			var idx int
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
-						response, err = run()
+						response, err = run(idx)
+						idx++
 						// Set SOF to false before calling next
 						ctx = context.WithValue(ctx, sys_key.SOF, false) // Update the context here
 						if err != nil {
@@ -118,7 +128,8 @@ func Middleware(
 			}
 
 			for !comparator(prev, curr) {
-				response, err = run()
+				response, err = run(idx)
+				idx++
 				// Set SOF to false before calling next
 				ctx = context.WithValue(ctx, sys_key.SOF, false) // Update the context here
 				if err != nil {
