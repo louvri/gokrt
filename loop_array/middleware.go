@@ -2,6 +2,8 @@ package loop_array
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
@@ -12,6 +14,8 @@ import (
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, postprocessor func(original, data interface{}, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
+			errorCollection := make([]map[string]interface{}, 0)
+
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				switch option {
@@ -35,8 +39,8 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 			if err != nil {
 				return nil, err
 			} else if ori != nil {
-				run := func(data interface{}) (interface{}, error) {
-					inner := func() (interface{}, error) {
+				run := func(data interface{}, index int) (interface{}, error) {
+					inner := func(index int) (interface{}, error) {
 						var req interface{}
 						if preprocessor != nil {
 							req = preprocessor(data)
@@ -44,8 +48,15 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							req = data
 						}
 						resp, err := e(ctx, req)
-						if err != nil && !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
-							return nil, err
+						if err != nil {
+							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
+								return nil, err
+							}
+							errorCollection = append(errorCollection, map[string]interface{}{
+								"error": err.Error(),
+								"index": index,
+							})
+
 						}
 						if postprocessor != nil {
 							postprocessor(data, resp, err)
@@ -58,27 +69,27 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						var wg sync.WaitGroup
 						wg.Add(1)
 						go func() {
-							response, err = inner()
+							response, err = inner(index)
 							wg.Done()
 						}()
 						wg.Wait()
 						return response, err
 					}
-					return inner()
+					return inner(index)
 				}
 				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 					if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 						if arr, ok := ori.([]map[string]interface{}); ok {
-							for _, item := range arr {
-								_, err := run(item)
+							for index, item := range arr {
+								_, err := run(item, index)
 								if err != nil {
 									return err
 								}
 							}
 							return nil
 						} else if arr, ok := ori.([]interface{}); ok {
-							for _, item := range arr {
-								_, err := run(item)
+							for index, item := range arr {
+								_, err := run(item, index)
 								if err != nil {
 									return err
 								}
@@ -90,15 +101,15 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					}
 				} else {
 					if arr, ok := ori.([]map[string]interface{}); ok {
-						for _, item := range arr {
-							_, err := run(item)
+						for index, item := range arr {
+							_, err := run(item, index)
 							if err != nil {
 								return nil, err
 							}
 						}
 					} else if arr, ok := ori.([]interface{}); ok {
-						for _, item := range arr {
-							_, err := run(item)
+						for index, item := range arr {
+							_, err := run(item, index)
 							if err != nil {
 								return nil, err
 							}
@@ -106,7 +117,12 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					}
 				}
 			}
-			return ori, nil
+			var errorOutcome error
+			if len(errorCollection) > 0 {
+				marshalled, _ := json.Marshal(errorCollection)
+				errorOutcome = errors.New(string(marshalled))
+			}
+			return ori, errorOutcome
 		}
 	}
 }
