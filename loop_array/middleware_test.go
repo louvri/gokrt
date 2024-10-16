@@ -2,6 +2,7 @@ package loop_array_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -108,8 +109,16 @@ func TestLoopArrayWithErrorAndIgnore(t *testing.T) {
 		),
 	)(m.Main)(context.Background(), "execute")
 	if r != nil {
-		t.Log("error should be nil")
-		t.FailNow()
+		decoded := make([]interface{}, 0)
+		if curr := json.Unmarshal([]byte(r.Error()), &decoded); curr != nil {
+			t.Log("error should be able decoded to array interface")
+			t.FailNow()
+		}
+
+		if len(decoded) != 1 {
+			t.Log("error have one, as the pre test function declared sum of error")
+			t.FailNow()
+		}
 	}
 
 }

@@ -2,6 +2,7 @@ package loop_next_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -67,6 +68,20 @@ func TestLoopNext(t *testing.T) {
 	if err == nil {
 		t.Log("should error")
 		t.FailNow()
+	}
+
+	if err != nil {
+		decoded := make([]interface{}, 0)
+		if curr := json.Unmarshal([]byte(err.Error()), &decoded); curr != nil {
+			t.Log("error should be able decoded to array interface")
+			t.FailNow()
+		}
+
+		if len(decoded) != 5 {
+			t.Log("error have five, as the pre test function declared sum of error")
+			t.FailNow()
+		}
+
 	}
 }
 
