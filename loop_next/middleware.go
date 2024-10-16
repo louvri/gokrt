@@ -2,6 +2,8 @@ package loop_next
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
@@ -37,7 +39,6 @@ func Middleware(
 			}
 
 			var kit gosl.Kit
-			errors := make([]string, 0)
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				kit = gosl.New(ctx)
 			}
@@ -46,7 +47,7 @@ func Middleware(
 			var err error
 			var response interface{}
 			curr = make([]map[string]interface{}, 0)
-			errorCollection := make([]map[string]interface{}, 0)
+			errorCollection := make([]map[int]interface{}, 0)
 
 			prevRequest := req
 
@@ -59,15 +60,13 @@ func Middleware(
 					response = curr
 					if err != nil {
 						ctx = context.WithValue(ctx, sys_key.EOF, "err")
-						errors = append(errors, err.Error())
 						response, err = next(ctx, nil)
 						if err != nil {
 							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 								return nil, err
 							}
-							errorCollection = append(errorCollection, map[string]interface{}{
-								"error": err,
-								"index": index,
+							errorCollection = append(errorCollection, map[int]interface{}{
+								index: err.Error(),
 							})
 						}
 					}
@@ -142,7 +141,13 @@ func Middleware(
 			} else {
 				response = eofResponse
 			}
-			return response, err
+
+			var errorOutcome error
+			if len(errorCollection) > 0 {
+				marshalled, _ := json.Marshal(errorCollection)
+				errorOutcome = errors.New(string(marshalled))
+			}
+			return response, errorOutcome
 		}
 	}
 }
