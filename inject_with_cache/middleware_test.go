@@ -111,3 +111,25 @@ func TestAlterMultipleCache(t *testing.T) {
 	}
 	t.Log(tobeProcessed)
 }
+
+func TestNilPreprocessor(t *testing.T) {
+	m := NewMock()
+	var tobeProcessed map[string]interface{}
+	_, err := endpoint.Chain(
+		cache.Middleware(m.First, nil, "cache-1"),
+		cache.Middleware(m.Third, nil, "cache-2"),
+		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
+			tobeProcessed = cache.(map[string]interface{})
+			return tobeProcessed
+		}),
+	)(m.Main)(context.Background(), "request")
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+	if len(tobeProcessed) == 0 {
+		t.Log("data field in result shouldn't be null")
+		t.FailNow()
+	}
+	t.Log(tobeProcessed)
+}

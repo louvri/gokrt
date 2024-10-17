@@ -15,17 +15,22 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 			if len(key) > 0 {
 				id = key[0]
 			}
+
+			var modified interface{}
+			if preprocessor != nil {
+				modified = preprocessor(req)
+			} else {
+				modified = req
+			}
+
+			response, err := e(ctx, modified)
+			if err != nil {
+				return nil, err
+			}
+
 			if existingCache == nil && id == "" {
-				response, err := e(ctx, preprocessor(req))
-				if err != nil {
-					return nil, err
-				}
 				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, response)
 			} else if existingCache == nil && id != "" {
-				response, err := e(ctx, preprocessor(req))
-				if err != nil {
-					return nil, err
-				}
 				ctx = context.WithValue(ctx, sys_key.CACHE_KEY, map[string]interface{}{
 					id: response,
 				})
@@ -35,10 +40,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					tobeCached = mapExist
 				}
 
-				response, err := e(ctx, preprocessor(req))
-				if err != nil {
-					return nil, err
-				}
 				if id != "" {
 					tobeCached[id] = response
 					ctx = context.WithValue(ctx, sys_key.CACHE_KEY, tobeCached)
