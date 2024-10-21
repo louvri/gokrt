@@ -40,8 +40,8 @@ func TestLoopNextNotIgnoreError(t *testing.T) {
 			return err
 		}, nil),
 	)(m.Main)(context.Background(), tmpIndex)
-	if err != nil {
-		t.Log(err.Error())
+	if err == nil {
+		t.Log("should be error")
 		t.FailNow()
 	}
 }
@@ -71,7 +71,7 @@ func TestLoopNext(t *testing.T) {
 	}
 
 	if err != nil {
-		decoded := make([]interface{}, 0)
+		decoded := make(map[int]interface{}, 0)
 		if curr := json.Unmarshal([]byte(err.Error()), &decoded); curr != nil {
 			t.Log("error should be able decoded to array interface")
 			t.FailNow()
