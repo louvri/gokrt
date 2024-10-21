@@ -109,7 +109,7 @@ func TestLoopArrayWithErrorAndIgnore(t *testing.T) {
 		),
 	)(m.Main)(context.Background(), "execute")
 	if r != nil {
-		decoded := make([]interface{}, 0)
+		decoded := make(map[int]interface{}, 0)
 		if curr := json.Unmarshal([]byte(r.Error()), &decoded); curr != nil {
 			t.Log("error should be able decoded to array interface")
 			t.FailNow()
@@ -239,9 +239,14 @@ func TestLoopRunWithError(t *testing.T) {
 	}
 
 	if err != nil {
-		tmp := strings.Split(err.Error(), " || ")
-		if len(tmp) != 2 {
-			t.Log("error should have len 2 since it's injected with 2 errors")
+		decoded := make(map[int]interface{}, 0)
+		if curr := json.Unmarshal([]byte(err.Error()), &decoded); curr != nil {
+			t.Log("error should be able decoded to array interface")
+			t.FailNow()
+		}
+
+		if len(decoded) != 2 {
+			t.Log("error have one, as the pre test function declared sum of error")
 			t.FailNow()
 		}
 	}

@@ -47,7 +47,7 @@ func Middleware(
 			var err error
 			var response interface{}
 			curr = make([]map[string]interface{}, 0)
-			errorCollection := make([]map[int]interface{}, 0)
+			errorCollection := map[int]interface{}{}
 
 			prevRequest := req
 
@@ -65,9 +65,7 @@ func Middleware(
 							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 								return nil, err
 							}
-							errorCollection = append(errorCollection, map[int]interface{}{
-								index: err.Error(),
-							})
+							errorCollection[index] = err.Error()
 						}
 					}
 
