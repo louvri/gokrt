@@ -109,7 +109,7 @@ func TestLoopArrayWithErrorAndIgnore(t *testing.T) {
 		),
 	)(m.Main)(context.Background(), "execute")
 	if r != nil {
-		decoded := make(map[int]interface{}, 0)
+		decoded := make([]map[string]interface{}, 0)
 		if curr := json.Unmarshal([]byte(r.Error()), &decoded); curr != nil {
 			t.Log("error should be able decoded to array interface")
 			t.FailNow()
@@ -222,7 +222,7 @@ func TestLoopRunWithError(t *testing.T) {
 			return data
 		}, func(original, data interface{}, err error) {
 			// no op
-		}),
+		}, option.RUN_WITH_ERROR),
 	)(func(context.Context, interface{}) (interface{}, error) {
 		return []interface{}{
 			"1stIndex",
@@ -239,7 +239,7 @@ func TestLoopRunWithError(t *testing.T) {
 	}
 
 	if err != nil {
-		decoded := make(map[int]interface{}, 0)
+		decoded := make([]map[string]interface{}, 0)
 		if curr := json.Unmarshal([]byte(err.Error()), &decoded); curr != nil {
 			t.Log("error should be able decoded to array interface")
 			t.FailNow()

@@ -14,7 +14,7 @@ import (
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, postprocessor func(original, data interface{}, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			errorCollection := map[int]interface{}{}
+			errorCollection := make([]map[string]interface{}, 0)
 
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
@@ -52,7 +52,10 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 								return nil, err
 							}
-							errorCollection[index] = err.Error()
+							errorCollection = append(errorCollection, map[string]interface{}{
+								"lineNumber": index,
+								"error":      err.Error(),
+							})
 
 						}
 						if postprocessor != nil {
