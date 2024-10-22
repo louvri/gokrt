@@ -71,7 +71,7 @@ func TestLoopNext(t *testing.T) {
 	}
 
 	if err != nil {
-		decoded := make(map[int]interface{}, 0)
+		decoded := make([]map[string]interface{}, 0)
 		if curr := json.Unmarshal([]byte(err.Error()), &decoded); curr != nil {
 			t.Log("error should be able decoded to array interface")
 			t.FailNow()
