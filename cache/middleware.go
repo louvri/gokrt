@@ -19,7 +19,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 			if preprocessor != nil {
 				iReq = preprocessor(iReq)
 			}
-			if req != nil {
+			if iReq != nil {
 				data, err := e(ctx, iReq)
 				if err != nil {
 					return nil, err
