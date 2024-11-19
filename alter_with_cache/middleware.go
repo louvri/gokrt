@@ -2,36 +2,59 @@ package alter_with_cache
 
 import (
 	"context"
+	"sync"
 
 	"github.com/go-kit/kit/endpoint"
+	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(cache interface{}, next interface{}) interface{}, key ...string) endpoint.Middleware {
+func Middleware(
+	preprocessor func(data interface{}, err error) interface{},
+	postprocessor func(original, data, cache interface{}, err error) (interface{}, error),
+	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			var cache, response interface{}
-			var err error
-			cache = ctx.Value(sys_key.CACHE_KEY)
-			id := ""
-			if len(key) > 0 {
-				id = key[0]
-			}
-			if id != "" {
-				if cache != nil {
-					if tmp, ok := cache.(map[string]interface{}); ok {
-						if exist, ok := tmp[id]; ok {
-							cache = exist
-						}
-					}
+
+			opt := make(map[RUN_WITH_OPTION.Option]bool)
+			for _, option := range opts {
+				switch option {
+				case RUN_WITH_OPTION.RUN_ASYNC_WAIT:
+					opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] = true
+				case RUN_WITH_OPTION.RUN_WITH_ERROR:
+					opt[RUN_WITH_OPTION.RUN_WITH_ERROR] = true
 				}
 			}
-			req = preprocessor(cache, req)
-			response, err = next(ctx, req)
-			if err != nil {
-				return response, err
+			original := req
+			var err error
+
+			inmem := ctx.Value(sys_key.CACHE_KEY)
+			if inmemCache, ok := inmem.(map[string]interface{}); ok {
+				modified := preprocessor(original, err)
+				if modified != nil {
+					var result interface{}
+					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
+						var wg sync.WaitGroup
+						wg.Add(1)
+						go func() {
+							defer wg.Done()
+							result, err = next(ctx, modified)
+						}()
+						wg.Wait()
+					} else {
+						result, err = next(ctx, modified)
+					}
+					if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] && err != nil {
+						return nil, err
+					}
+					return postprocessor(original, result, inmemCache, err)
+				}
+				return nil, nil
 			}
-			return e(ctx, response)
+			if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] && err != nil {
+				return nil, err
+			}
+			return original, err
 		}
 	}
 }
