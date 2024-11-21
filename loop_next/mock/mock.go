@@ -63,6 +63,18 @@ func NewMock() Mock {
 	return instance
 }
 
+func (m *mock) SetCounter() int {
+	m.counter = -1
+	return m.counter
+}
+func (m *mock) Batch(ctx context.Context, request interface{}) (interface{}, error) {
+	current := m.counter
+	if current >= len(BatchWithSameData) {
+		return nil, nil
+	}
+	return BatchWithSameData[current], nil
+}
+
 func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
 
 	current := m.counter
