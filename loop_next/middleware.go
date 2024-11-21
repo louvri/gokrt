@@ -48,6 +48,7 @@ func Middleware(
 			var response interface{}
 			curr = make([]map[string]interface{}, 0)
 			errorCollection := make([]map[string]interface{}, 0)
+
 			run := func(index int) (interface{}, error) {
 				inner := func(index int) (interface{}, error) {
 					currReq := modifier(req, curr)
