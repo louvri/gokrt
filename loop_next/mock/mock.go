@@ -9,6 +9,26 @@ import (
 var Err = errors.New("error appear")
 var instance *mock
 
+var BatchWithSameData = [][]interface{}{
+	{
+		"1stIndex",
+		"2ndIndex",
+		"3rdIndex",
+		"4thIndex",
+	},
+	{
+		"7thIndex",
+		"8thIndex",
+		"9thIndex",
+		"10thIndex",
+	},
+	{
+		"1stIndex",
+		"2ndIndex",
+		"3rdIndex",
+		"4thIndex",
+	},
+}
 var Batch = []interface{}{
 	"1stIndex",
 	"2ndIndex",
