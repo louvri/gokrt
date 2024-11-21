@@ -40,6 +40,12 @@ var BatchWithSameData = [][]interface{}{
 		"18thIndex",
 		"19thIndex",
 	},
+	{
+		Err,
+		Err,
+		Err,
+		Err,
+	},
 }
 
 var Batch = []interface{}{
