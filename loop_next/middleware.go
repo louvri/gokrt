@@ -48,14 +48,10 @@ func Middleware(
 			var response interface{}
 			curr = make([]map[string]interface{}, 0)
 			errorCollection := make([]map[string]interface{}, 0)
-
-			prevRequest := req
-
 			run := func(index int) (interface{}, error) {
 				inner := func(index int) (interface{}, error) {
-					currReq := modifier(prevRequest, curr)
+					currReq := modifier(req, curr)
 					prev = curr
-					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
 					curr, err = next(ctx, currReq)
 					response = curr
 					if err != nil {
