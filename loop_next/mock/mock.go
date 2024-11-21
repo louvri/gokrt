@@ -9,6 +9,45 @@ import (
 var Err = errors.New("error appear")
 var instance *mock
 
+var BatchWithSameData = [][]interface{}{
+	{
+		"1stIndex",
+		"2ndIndex",
+		"3rdIndex",
+		"4thIndex",
+	},
+	{
+		"7thIndex",
+		"8thIndex",
+		"9thIndex",
+		"10thIndex",
+	},
+	{
+		"11thIndex",
+		"12thIndex",
+		"13thIndex",
+		"14thIndex",
+	},
+	{
+		"16thIndex",
+		"17thIndex",
+		"18thIndex",
+		"19thIndex",
+	},
+	{
+		"16thIndex",
+		"17thIndex",
+		"18thIndex",
+		"19thIndex",
+	},
+	{
+		Err,
+		Err,
+		Err,
+		Err,
+	},
+}
+
 var Batch = []interface{}{
 	"1stIndex",
 	"2ndIndex",
@@ -44,8 +83,10 @@ type Mock interface {
 	Main(ctx context.Context, request interface{}) (interface{}, error)
 	MainNoErr(ctx context.Context, request interface{}) (interface{}, error)
 	Executor(ctx context.Context, request interface{}) (interface{}, error)
+	Batch(ctx context.Context, request interface{}) (interface{}, error)
 	GetCounter() int
 	Increment(int)
+	SetCounter() int
 }
 
 type mock struct {
