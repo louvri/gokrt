@@ -51,9 +51,9 @@ func Middleware(
 
 			run := func(index int) (interface{}, error) {
 				inner := func(index int) (interface{}, error) {
-					currReq := modifier(req, curr)
+					modifiedReq := modifier(req, curr)
 					prev = curr
-					curr, err = next(ctx, currReq)
+					curr, err = next(ctx, modifiedReq)
 					response = curr
 					if err != nil {
 						ctx = context.WithValue(ctx, sys_key.EOF, "err")
