@@ -169,3 +169,53 @@ func TestRunErrorTransaction(t *testing.T) {
 	}
 
 }
+
+func TestBatch(t *testing.T) {
+	m := mock.NewMock()
+	_, err := endpoint.Chain(
+		loop_next.Middleware(func(prev, curr interface{}) bool {
+			m.Increment(1)
+			if prev != nil && curr != nil {
+				var current, previous []interface{}
+				if tmp, ok := curr.([]interface{}); ok && len(tmp) > 0 {
+					current = tmp
+				}
+
+				if tmp, ok := prev.([]interface{}); ok && len(tmp) > 0 {
+					previous = tmp
+				}
+
+				if len(previous) == 0 && len(current) == 0 {
+					return false
+				}
+
+				if len(previous) > 0 && len(current) > 0 {
+					trueCounter := 0
+					for index, item := range current {
+						if item == previous[index] {
+							trueCounter++
+						}
+					}
+
+					if len(previous) == len(current) && len(current) == trueCounter {
+						return true
+					}
+				}
+			}
+			return false
+		}, func(req, next interface{}) interface{} {
+			res := m.GetCounter()
+			return res
+		}, nil),
+		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
+			if data != nil && err == nil {
+				return data
+			}
+			return err
+		}, nil),
+	)(m.Batch)(context.Background(), m.SetCounter())
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+}

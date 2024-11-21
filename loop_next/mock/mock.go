@@ -23,12 +23,25 @@ var BatchWithSameData = [][]interface{}{
 		"10thIndex",
 	},
 	{
-		"1stIndex",
-		"2ndIndex",
-		"3rdIndex",
-		"4thIndex",
+		"11thIndex",
+		"12thIndex",
+		"13thIndex",
+		"14thIndex",
+	},
+	{
+		"16thIndex",
+		"17thIndex",
+		"18thIndex",
+		"19thIndex",
+	},
+	{
+		"16thIndex",
+		"17thIndex",
+		"18thIndex",
+		"19thIndex",
 	},
 }
+
 var Batch = []interface{}{
 	"1stIndex",
 	"2ndIndex",
@@ -64,8 +77,10 @@ type Mock interface {
 	Main(ctx context.Context, request interface{}) (interface{}, error)
 	MainNoErr(ctx context.Context, request interface{}) (interface{}, error)
 	Executor(ctx context.Context, request interface{}) (interface{}, error)
+	Batch(ctx context.Context, request interface{}) (interface{}, error)
 	GetCounter() int
 	Increment(int)
+	SetCounter() int
 }
 
 type mock struct {
@@ -81,6 +96,18 @@ func NewMock() Mock {
 		}
 	}
 	return instance
+}
+
+func (m *mock) SetCounter() int {
+	m.counter = 0
+	return m.counter
+}
+func (m *mock) Batch(ctx context.Context, request interface{}) (interface{}, error) {
+	current := m.counter
+	if current >= len(BatchWithSameData) {
+		return nil, nil
+	}
+	return BatchWithSameData[current], nil
 }
 
 func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
