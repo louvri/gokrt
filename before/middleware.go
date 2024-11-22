@@ -18,10 +18,7 @@ func Middleware(
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
-				switch option {
-				case RUN_WITH_OPTION.RUN_ASYNC_WAIT:
-					opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] = true
-				}
+				opt[option] = true
 			}
 			var result interface{}
 			if preprocessor != nil {
