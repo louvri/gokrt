@@ -24,18 +24,7 @@ func Middleware(
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
-				switch option {
-				case RUN_WITH_OPTION.RUN_ASYNC_WAIT:
-					opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] = true
-					continue
-				case RUN_WITH_OPTION.RUN_WITH_ERROR:
-					opt[RUN_WITH_OPTION.RUN_WITH_ERROR] = true
-					continue
-				case RUN_WITH_OPTION.RUN_IN_TRANSACTION:
-					opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] = true
-				default:
-					continue
-				}
+				opt[option] = true
 			}
 
 			var kit gosl.Kit
@@ -49,29 +38,26 @@ func Middleware(
 			curr = make([]map[string]interface{}, 0)
 			errorCollection := make([]map[string]interface{}, 0)
 
-			prevRequest := req
-
-			run := func(index int) (interface{}, error) {
-				inner := func(index int) (interface{}, error) {
-					currReq := modifier(prevRequest, curr)
+			run := func(iteration int, ctx context.Context) (interface{}, error) {
+				inner := func(iteration int) (interface{}, error) {
 					prev = curr
-					ctx = context.WithValue(ctx, sys_key.DATA_REF, prev)
-					curr, err = next(ctx, currReq)
-					response = curr
+					currReq := modifier(req, curr)
+					response, err = next(ctx, currReq)
+					curr = response
 					if err != nil {
-						ctx = context.WithValue(ctx, sys_key.EOF, "err")
-						response, err = next(ctx, nil)
-						if err != nil {
-							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
-								return nil, err
-							}
+						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
+							ctx = context.WithValue(ctx, sys_key.EOF, "err")
+							response, _ = next(ctx, nil)
+						}
+						if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
+							return nil, err
+						} else {
 							errorCollection = append(errorCollection, map[string]interface{}{
-								"lineNumber": index,
-								"error":      err.Error(),
+								"iteration": iteration,
+								"error":     err.Error(),
 							})
 						}
 					}
-
 					if postprocessor != nil {
 						postprocessor(req, curr, err)
 					}
@@ -86,63 +72,62 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
-						response, err = inner(index)
+						response, err = inner(iteration)
 						wg.Done()
 					}()
 					wg.Wait()
 					return response, err
 				}
-				return inner(index)
+				return inner(iteration)
 			}
 
-			ctx = context.WithValue(ctx, sys_key.SOF, true)
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil {
 				return next(ctx, nil)
 			}
-
 			var idx int
+			if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
+				ctx = context.WithValue(ctx, sys_key.SOF, true)
+			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
-						response, err = run(idx)
-						idx++
-						// Set SOF to false before calling next
-						ctx = context.WithValue(ctx, sys_key.SOF, false) // Update the context here
+						response, err = run(idx, ctx)
 						if err != nil {
 							return err
 						}
+						idx++
+						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
+							// Set SOF to false before calling next
+							ctx = context.WithValue(ctx, sys_key.SOF, false)
+						}
 					}
-					ctx = context.WithValue(ctx, sys_key.EOF, "eof")
-					if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
-						return eofErr
-					} else {
-						response = eofResponse
-						return nil
-					}
-
+					return nil
 				}); err != nil {
 					return nil, err
 				}
-				return response, nil
-			}
+			} else {
+				for !comparator(prev, curr) {
+					response, err = run(idx, ctx)
+					if err != nil {
+						return nil, err
+					}
+					idx++
+					if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
+						// Set SOF to false before calling next
+						ctx = context.WithValue(ctx, sys_key.SOF, false) // Update the context here
+					}
+				}
 
-			for !comparator(prev, curr) {
-				response, err = run(idx)
-				idx++
-				// Set SOF to false before calling next
-				ctx = context.WithValue(ctx, sys_key.SOF, false) // Update the context here
-				if err != nil {
-					return nil, err
+			}
+			if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
+				ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+				if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
+					return nil, eofErr
+				} else {
+					response = eofResponse
 				}
 			}
-			ctx = context.WithValue(ctx, sys_key.EOF, "eof")
-			if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
-				return nil, eofErr
-			} else {
-				response = eofResponse
-			}
-
 			var errorOutcome error
 			if len(errorCollection) > 0 {
 				marshalled, _ := json.Marshal(errorCollection)

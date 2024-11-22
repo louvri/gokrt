@@ -9,14 +9,17 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/alter_with_cache"
 	"github.com/louvri/gokrt/cache"
+	"github.com/louvri/gokrt/loop_array"
 )
 
 type Mock interface {
+	Loop(ctx context.Context, request interface{}) (interface{}, error)
 	Main(ctx context.Context, request interface{}) (interface{}, error)
 	First(ctx context.Context, request interface{}) (interface{}, error)
 	Alter(ctx context.Context, request interface{}) (interface{}, error)
 	Third(ctx context.Context, request interface{}) (interface{}, error)
 	Error(ctx context.Context, request interface{}) (interface{}, error)
+	Forth(ctx context.Context, request interface{}) (interface{}, error)
 }
 type mock struct {
 	logger *log.Logger
@@ -43,6 +46,9 @@ func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, erro
 func (m *mock) First(ctx context.Context, request interface{}) (interface{}, error) {
 	return "first inject endpoint", nil
 }
+func (m *mock) Forth(ctx context.Context, request interface{}) (interface{}, error) {
+	return "forth", nil
+}
 func (m *mock) Alter(ctx context.Context, request interface{}) (interface{}, error) {
 	if result, ok := request.(map[string]interface{}); ok {
 		result["status"] = "injected"
@@ -60,27 +66,39 @@ func (m *mock) Error(ctx context.Context, request interface{}) (interface{}, err
 	return nil, errors.New("it's error")
 }
 
+func (m *mock) Loop(ctx context.Context, request interface{}) (interface{}, error) {
+	return []interface{}{
+		"main1",
+		"main2",
+		"main3",
+		"main4",
+		"main5",
+		"main6",
+	}, nil
+}
+
 func TestAlterWithCache(t *testing.T) {
 	m := NewMock()
 
 	result, err := endpoint.Chain(
 		cache.Middleware(m.First, func(req interface{}) interface{} {
-			return nil
+			return "req 1"
 		}, "key-1"),
 		cache.Middleware(m.Third, func(req interface{}) interface{} {
-			return nil
+			return "req 1"
 		}, "key-2"),
-		alter_with_cache.Middleware(m.Alter,
-			func(cache, next interface{}) interface{} {
-				if tobeProcessed, ok := next.(Data); ok {
-					if cached, ok := cache.(map[string]interface{}); ok {
-						tobeProcessed.Cache = cached
-						return tobeProcessed
-					}
-				}
-				return nil
-			}),
-	)(m.Main)(context.Background(), Data{
+		loop_array.Middleware(
+			endpoint.Chain(
+				alter_with_cache.Middleware(func(data interface{}, err error) interface{} {
+					return "alter1"
+				}, func(original, data, cache interface{}, err error) (interface{}, error) {
+					return "alter1", nil
+				}),
+			)(m.Third), func(data interface{}) interface{} {
+				return data
+			}, nil,
+		),
+	)(m.Loop)(context.Background(), Data{
 		Request: "request",
 	})
 
