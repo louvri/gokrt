@@ -11,10 +11,9 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/sys_key"
-	sql "github.com/louvri/gosl"
 )
 
-func Middleware(filename string, size int, decoder func(data interface{}) interface{}, useTransaction bool, ignoreError bool, splitterSym ...string) endpoint.Middleware {
+func Middleware(filename string, size int, decoder func(data interface{}) interface{}, ignoreError bool, splitterSym ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			splitter := ";"
@@ -30,39 +29,9 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			scanner := bufio.NewScanner(reader)
 			first := true
 			var columns []string
-			tobeInserted := make([]map[string]interface{}, 0)
-			exec := func(ctx context.Context, data map[string]interface{}, flush bool) (interface{}, error) {
+			exec := func(ctx context.Context, data map[string]interface{}) (interface{}, error) {
 				isEmpty := len(data) == 0
-				if useTransaction {
-					var responses []interface{}
-					if len(tobeInserted) > size || flush {
-						responses = make([]interface{}, 0)
-						err := sql.RunInTransaction(ctx, func(ctx context.Context) error {
-							for _, item := range tobeInserted {
-								var err error
-								var response interface{}
-								if decoder != nil {
-									response, err = next(ctx, decoder(item))
-								} else {
-									response, err = next(ctx, item)
-								}
-								responses = append(responses, response)
-								if err != nil {
-									return err
-								}
-							}
-							return nil
-						})
-						if err != nil {
-							return responses, err
-						}
-						tobeInserted = make([]map[string]interface{}, 0)
-					}
-					if !isEmpty {
-						tobeInserted = append(tobeInserted, data)
-					}
-					return responses, nil
-				} else if !isEmpty {
+				if !isEmpty {
 					var err error
 					var response interface{}
 					if decoder != nil {
@@ -104,7 +73,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 							data[column] = values[i]
 						}
 						data["lineNumber"] = lineNumber
-						response, err = exec(ctx, data, false)
+						response, err = exec(ctx, data)
 						if err != nil && !ignoreError {
 							return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 						} else if err != nil {
@@ -116,7 +85,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 				lineNumber++
 				time.Sleep(0)
 			}
-			if tmp, err := exec(ctx, nil, true); err != nil && !ignoreError {
+			if tmp, err := exec(ctx, nil); err != nil && !ignoreError {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			} else {
 				if err != nil {
