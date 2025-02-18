@@ -29,7 +29,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			scanner := bufio.NewScanner(reader)
 			first := true
 			var columns []string
-			exec := func(ctx context.Context, data map[string]interface{}, flush bool) (interface{}, error) {
+			exec := func(ctx context.Context, data map[string]interface{}) (interface{}, error) {
 				isEmpty := len(data) == 0
 				if !isEmpty {
 					var err error
@@ -73,7 +73,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 							data[column] = values[i]
 						}
 						data["lineNumber"] = lineNumber
-						response, err = exec(ctx, data, false)
+						response, err = exec(ctx, data)
 						if err != nil && !ignoreError {
 							return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 						} else if err != nil {
@@ -85,7 +85,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 				lineNumber++
 				time.Sleep(0)
 			}
-			if tmp, err := exec(ctx, nil, true); err != nil && !ignoreError {
+			if tmp, err := exec(ctx, nil); err != nil && !ignoreError {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			} else {
 				if err != nil {
