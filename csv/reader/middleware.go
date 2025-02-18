@@ -11,10 +11,9 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/sys_key"
-	sql "github.com/louvri/gosl"
 )
 
-func Middleware(filename string, size int, decoder func(data interface{}) interface{}, useTransaction bool, ignoreError bool, splitterSym ...string) endpoint.Middleware {
+func Middleware(filename string, size int, decoder func(data interface{}) interface{}, ignoreError bool, splitterSym ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
 			splitter := ";"
@@ -30,39 +29,9 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			scanner := bufio.NewScanner(reader)
 			first := true
 			var columns []string
-			tobeInserted := make([]map[string]interface{}, 0)
 			exec := func(ctx context.Context, data map[string]interface{}, flush bool) (interface{}, error) {
 				isEmpty := len(data) == 0
-				if useTransaction {
-					var responses []interface{}
-					if len(tobeInserted) > size || flush {
-						responses = make([]interface{}, 0)
-						err := sql.RunInTransaction(ctx, func(ctx context.Context) error {
-							for _, item := range tobeInserted {
-								var err error
-								var response interface{}
-								if decoder != nil {
-									response, err = next(ctx, decoder(item))
-								} else {
-									response, err = next(ctx, item)
-								}
-								responses = append(responses, response)
-								if err != nil {
-									return err
-								}
-							}
-							return nil
-						})
-						if err != nil {
-							return responses, err
-						}
-						tobeInserted = make([]map[string]interface{}, 0)
-					}
-					if !isEmpty {
-						tobeInserted = append(tobeInserted, data)
-					}
-					return responses, nil
-				} else if !isEmpty {
+				if !isEmpty {
 					var err error
 					var response interface{}
 					if decoder != nil {
