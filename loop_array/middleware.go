@@ -67,24 +67,24 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					return inner(index)
 				}
 				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+					if err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
 						if arr, ok := ori.([]map[string]interface{}); ok {
 							for index, item := range arr {
 								_, err := run(item, index)
 								if err != nil {
-									return err
+									return ctx, err
 								}
 							}
-							return nil
+							return ctx, nil
 						} else if arr, ok := ori.([]interface{}); ok {
 							for index, item := range arr {
 								_, err := run(item, index)
 								if err != nil {
-									return err
+									return ctx, err
 								}
 							}
 						}
-						return nil
+						return ctx, nil
 					}); err != nil {
 						return nil, err
 					}
