@@ -90,11 +90,11 @@ func Middleware(
 				ctx = context.WithValue(ctx, sys_key.SOF, true)
 			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				if err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
 					for !comparator(prev, curr) {
 						response, err = run(idx, ctx)
 						if err != nil {
-							return err
+							return ctx, err
 						}
 						idx++
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
@@ -102,7 +102,7 @@ func Middleware(
 							ctx = context.WithValue(ctx, sys_key.SOF, false)
 						}
 					}
-					return nil
+					return ctx, nil
 				}); err != nil {
 					return nil, err
 				}
