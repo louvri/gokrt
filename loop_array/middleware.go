@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
-	"github.com/louvri/gosl"
 )
 
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, postprocessor func(original, data interface{}, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
@@ -20,10 +19,10 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 			for _, option := range opts {
 				opt[option] = true
 			}
-			var kit gosl.Kit
+			/*var kit gosl.Kit
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				kit = gosl.New(ctx)
-			}
+			}*/
 			ori, err := next(ctx, req)
 			if err != nil {
 				return nil, err
@@ -67,7 +66,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					return inner(index)
 				}
 				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					if err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+					/*if _, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
 						if arr, ok := ori.([]map[string]interface{}); ok {
 							for index, item := range arr {
 								_, err := run(item, index)
@@ -87,7 +86,8 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						return ctx, nil
 					}); err != nil {
 						return nil, err
-					}
+					}*/
+					return nil, errors.New("transaction is disabled in this version")
 				} else {
 					if arr, ok := ori.([]map[string]interface{}); ok {
 						for index, item := range arr {

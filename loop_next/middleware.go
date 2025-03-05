@@ -11,7 +11,6 @@ import (
 
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
-	"github.com/louvri/gosl"
 )
 
 // loop
@@ -26,12 +25,12 @@ func Middleware(
 			for _, option := range opts {
 				opt[option] = true
 			}
-
-			var kit gosl.Kit
-			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				kit = gosl.New(ctx)
-			}
-
+			/*
+				var kit gosl.Kit
+				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
+					kit = gosl.New(ctx)
+				}
+			*/
 			var prev, curr interface{}
 			var err error
 			var response interface{}
@@ -90,7 +89,7 @@ func Middleware(
 				ctx = context.WithValue(ctx, sys_key.SOF, true)
 			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				if err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+				/*if _, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
 					for !comparator(prev, curr) {
 						response, err = run(idx, ctx)
 						if err != nil {
@@ -105,7 +104,8 @@ func Middleware(
 					return ctx, nil
 				}); err != nil {
 					return nil, err
-				}
+				}*/
+				return nil, errors.New("transaction is disabled in this version")
 			} else {
 				for !comparator(prev, curr) {
 					response, err = run(idx, ctx)
