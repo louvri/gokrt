@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
+	"github.com/louvri/gokrt/wrapper"
 )
 
 func Middleware(
@@ -36,10 +37,22 @@ func Middleware(
 							altered, err = e(ctx, req)
 						}()
 						wg.Wait()
-						return postprocessor(original, altered, err)
+						var extracted any
+						if tmp, ok := altered.(wrapper.Wrapper); ok {
+							extracted = tmp
+						} else {
+							extracted = altered
+						}
+						return postprocessor(original, extracted, err)
 					} else {
 						altered, err = e(ctx, result)
-						return postprocessor(original, altered, err)
+						var extracted any
+						if tmp, ok := altered.(wrapper.Wrapper); ok {
+							extracted = tmp
+						} else {
+							extracted = altered
+						}
+						return postprocessor(original, extracted, err)
 					}
 
 				} else {
