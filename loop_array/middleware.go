@@ -49,7 +49,11 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							}
 						}
 						if postprocessor != nil {
-							postprocessor(data, resp, err)
+							if tmp, ok := resp.(wrapper.Wrapper); ok {
+								postprocessor(data, tmp.Data, err)
+							} else {
+								postprocessor(data, resp, err)
+							}
 						}
 						return resp, nil
 					}

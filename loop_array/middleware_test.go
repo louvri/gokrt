@@ -251,3 +251,27 @@ func TestLoopRunWithError(t *testing.T) {
 		}
 	}
 }
+
+func TestLoopFailedTransact(t *testing.T) {
+	m := NewMock(nil)
+	_, r := endpoint.Chain(
+		loop_array.Middleware(
+			m.Executor, func(data interface{}) interface{} {
+				return data
+			}, func(original, data interface{}, err error) {
+				// no op
+			},
+		),
+	)(m.Main)(context.Background(), "execute")
+	if r != nil {
+		if !strings.EqualFold(err.Error(), r.Error()) {
+			t.Log("error should be same as predeclared")
+			t.FailNow()
+		}
+	}
+
+	if r == nil {
+		t.Log("error shouldn't be nil")
+		t.FailNow()
+	}
+}
