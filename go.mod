@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.39.0
 	github.com/go-kit/kit v0.13.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/louvri/gosl v1.0.16-0.20250602081610-207e847e2776
+	github.com/louvri/gosl v1.0.16
 	github.com/redis/go-redis/v9 v9.5.1
 	google.golang.org/api v0.166.0
 )
