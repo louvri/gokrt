@@ -22,6 +22,7 @@ type Mock interface {
 	Main(ctx context.Context, request interface{}) (interface{}, error)
 	Executor(ctx context.Context, request interface{}) (interface{}, error)
 	Insert(ctx context.Context, request interface{}) (interface{}, error)
+	InsertWithTx(ctx context.Context, request interface{}) (interface{}, error)
 }
 
 type mock struct {
@@ -36,23 +37,63 @@ func NewMock(db *sqlx.DB) Mock {
 	}
 }
 
-func (m *mock) Insert(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) InsertWithTx(ctx context.Context, request interface{}) (interface{}, error) {
 	var tobeInsert string
+	var cErr error
 	if tmp, ok := request.(string); ok {
 		tobeInsert = tmp
 	} else if tmp, ok := request.(error); ok {
-		fmt.Printf("found error on upsert: %v \n", tmp)
-		return nil, tmp
+		cErr = tmp
 	}
+	var result int64
 	queryable := ctx.Value(gosl.SQL_KEY).(*gosl.Queryable)
 	fmt.Printf("tobe inserted on upsert: %s \n", tobeInsert)
+	kit := gosl.New(ctx)
+
+	c, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+		query := fmt.Sprintf("INSERT INTO trx_table(`values`) VALUES('%s')", tobeInsert)
+		res, err := queryable.ExecContext(ctx, query)
+		if cErr != nil {
+			err = cErr
+		}
+		if err != nil {
+			return ctx, err
+		}
+		result, _ = res.LastInsertId()
+		return ctx, nil
+	})
+	return gosl.Context{
+		Ctx:  c,
+		Data: result,
+	}, err
+
+}
+
+func (m *mock) Insert(ctx context.Context, request interface{}) (interface{}, error) {
+	var tobeInsert string
+	var cErr error
+	if tmp, ok := request.(string); ok {
+		tobeInsert = tmp
+	} else if tmp, ok := request.(error); ok {
+		cErr = tmp
+	}
+	var result int64
+	queryable := ctx.Value(gosl.SQL_KEY).(*gosl.Queryable)
+	fmt.Printf("tobe inserted on upsert: %s \n", tobeInsert)
+	// kit := gosl.New(ctx)
+
 	query := fmt.Sprintf("INSERT INTO trx_table(`values`) VALUES('%s')", tobeInsert)
 	res, err := queryable.ExecContext(ctx, query)
-	if err != nil {
-		return nil, err
+	if cErr != nil {
+		err = cErr
 	}
-	return res.LastInsertId()
+	result, _ = res.LastInsertId()
+	return gosl.Context{
+		Ctx:  ctx,
+		Data: result,
+	}, err
 }
+
 func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
 	return []interface{}{
 		"1stIndex",
@@ -272,6 +313,126 @@ func TestLoopFailedTransact(t *testing.T) {
 
 	if r == nil {
 		t.Log("error shouldn't be nil")
+		t.FailNow()
+	}
+}
+
+func TestLoopRunInTransactionWithErrorToRollback(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := sqlx.Connect("mysql", fmt.Sprintf(
+		"%s:%s@(%s:%s)/%s",
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx"))
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+	m := NewMock(db)
+
+	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
+
+	// Chain the endpoints with the loop_array middleware
+	_, err = endpoint.Chain(
+		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
+			return data
+		}, func(original, data interface{}, err error) {
+		}, option.RUN_IN_TRANSACTION),
+	)(func(context.Context, interface{}) (interface{}, error) {
+		return []interface{}{
+			"1stIndex",
+			errors.New("first error"), // This will trigger a rollback
+			"3rdIndex",
+			"4thIndex",
+			errors.New("second error"),
+			"5thIndex",
+		}, nil
+	})(ctx, "execute")
+
+	if err == nil {
+		t.Log("should return error")
+		t.FailNow()
+	}
+}
+
+func TestNested(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := sqlx.Connect("mysql", fmt.Sprintf(
+		"%s:%s@(%s:%s)/%s",
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx"))
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+	m := NewMock(db)
+	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
+	kit := gosl.New(ctx)
+
+	if _, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+		r, err := m.InsertWithTx(ctx, "data1")
+		if err != nil {
+			if tmp, ok := r.(gosl.Context); ok {
+				return tmp.Ctx, err
+			}
+			return ctx, err
+		}
+
+		r, err = m.InsertWithTx(ctx, errors.New("error1"))
+		if err != nil {
+			if tmp, ok := r.(gosl.Context); ok {
+				return tmp.Ctx, err
+			}
+			return ctx, err
+		}
+		return ctx, nil
+	}); err == nil {
+		t.Log("should be error")
+		t.FailNow()
+	}
+}
+
+func TestLoopRunInTransactionWithNoError(t *testing.T) {
+	ctx := context.Background()
+
+	db, err := sqlx.Connect("mysql", fmt.Sprintf(
+		"%s:%s@(%s:%s)/%s",
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx"))
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+	m := NewMock(db)
+
+	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
+	// Chain the endpoints with the loop_array middleware
+	_, err = endpoint.Chain(
+		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
+			return data
+		}, func(original, data interface{}, err error) {
+		}, option.RUN_IN_TRANSACTION),
+	)(func(context.Context, interface{}) (interface{}, error) {
+		return []interface{}{
+			"1stIndex",
+			"3rdIndex",
+			"4thIndex",
+			"5thIndex",
+		}, nil
+	})(ctx, "execute")
+
+	if err == nil {
+		t.Log("should return error")
 		t.FailNow()
 	}
 }
