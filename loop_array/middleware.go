@@ -21,10 +21,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 			for _, option := range opts {
 				opt[option] = true
 			}
-			/*var kit gosl.Kit
-			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				kit = gosl.New(ctx)
-			}*/
 			ori, err := next(ctx, req)
 			if err != nil {
 				return nil, err
