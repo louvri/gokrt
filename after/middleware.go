@@ -2,7 +2,6 @@ package after
 
 import (
 	"context"
-	"sync"
 
 	"github.com/go-kit/kit/endpoint"
 	icontext "github.com/louvri/gokrt/icontext"
@@ -28,17 +27,11 @@ func Middleware(
 					if _, ok := ctx.(*icontext.CopyContext); !ok {
 						ctx = icontext.New(ctx)
 					}
-					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
-						var wg sync.WaitGroup
-						wg.Add(1)
-						go func() {
-							defer wg.Done()
-							e(ctx, result)
-							if postprocessor != nil {
-								postprocessor(resp, err)
-							}
-						}()
-						wg.Wait()
+					if runSync := opt[RUN_WITH_OPTION.RUN_SYNC]; runSync {
+						e(ctx, result)
+						if postprocessor != nil {
+							postprocessor(resp, err)
+						}
 					} else {
 						go func() {
 							e(ctx, result)
