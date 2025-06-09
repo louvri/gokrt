@@ -57,8 +57,8 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						var wg sync.WaitGroup
 						wg.Add(1)
 						go func() {
+							defer wg.Done()
 							response, err = inner(index)
-							wg.Done()
 						}()
 						wg.Wait()
 						return response, err

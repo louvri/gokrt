@@ -71,8 +71,8 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
+						defer wg.Done()
 						response, err = inner(iteration)
-						wg.Done()
 					}()
 					wg.Wait()
 					return response, err

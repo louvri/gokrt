@@ -32,11 +32,11 @@ func Middleware(
 						var wg sync.WaitGroup
 						wg.Add(1)
 						go func() {
+							defer wg.Done()
 							e(ctx, result)
 							if postprocessor != nil {
 								postprocessor(resp, err)
 							}
-							wg.Done()
 						}()
 						wg.Wait()
 					} else {
