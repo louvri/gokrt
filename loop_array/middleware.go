@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
+	"github.com/louvri/gosl"
 )
 
 func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, postprocessor func(original, data interface{}, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
@@ -57,8 +58,8 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						var wg sync.WaitGroup
 						wg.Add(1)
 						go func() {
+							defer wg.Done()
 							response, err = inner(index)
-							wg.Done()
 						}()
 						wg.Wait()
 						return response, err
@@ -66,28 +67,28 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					return inner(index)
 				}
 				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					/*if _, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+					kit := gosl.New(ctx)
+					if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 						if arr, ok := ori.([]map[string]interface{}); ok {
 							for index, item := range arr {
 								_, err := run(item, index)
 								if err != nil {
-									return ctx, err
+									return err
 								}
 							}
-							return ctx, nil
+							return nil
 						} else if arr, ok := ori.([]interface{}); ok {
 							for index, item := range arr {
 								_, err := run(item, index)
 								if err != nil {
-									return ctx, err
+									return err
 								}
 							}
 						}
-						return ctx, nil
+						return nil
 					}); err != nil {
 						return nil, err
-					}*/
-					return nil, errors.New("transaction is disabled in this version")
+					}
 				} else {
 					if arr, ok := ori.([]map[string]interface{}); ok {
 						for index, item := range arr {
