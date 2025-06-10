@@ -151,7 +151,7 @@ func TestRunErrorTransaction(t *testing.T) {
 	mockDb := mock.NewMockDB(db)
 
 	kit := gosl.New(ctx)
-	if _, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+	if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 		var batchError []string
 		for _, data := range mock.Batch {
 			_, err := mockDb.Upsert(ctx, data)
@@ -160,11 +160,11 @@ func TestRunErrorTransaction(t *testing.T) {
 			}
 		}
 		if len(batchError) > 0 {
-			return ctx, errors.New(strings.Join(batchError, " || "))
+			return errors.New(strings.Join(batchError, " || "))
 		}
-		return ctx, nil
-	}); err != nil {
-		t.Log(err.Error())
+		return nil
+	}); err == nil {
+		t.Log("should error")
 		t.FailNow()
 	}
 

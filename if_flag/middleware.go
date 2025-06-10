@@ -27,8 +27,8 @@ func Middleware(key, field string, value interface{}, redis *goRedis.Client, e e
 							var wg sync.WaitGroup
 							wg.Add(1)
 							go func() {
+								defer wg.Done()
 								e(ctx, result)
-								wg.Done()
 							}()
 							wg.Wait()
 						} else {

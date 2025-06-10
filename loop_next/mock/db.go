@@ -41,7 +41,17 @@ func (m *mockDB) Upsert(ctx context.Context, request interface{}) (interface{}, 
 		fmt.Printf("found error on upsert: %v \n", tmp)
 		return nil, tmp
 	}
-	queryable := ctx.Value(gosl.SQL_KEY).(*gosl.Queryable)
+	var queryable *gosl.Queryable
+
+	if tmp, ok := ctx.Value(gosl.SQL_KEY).(*gosl.Queryable); ok {
+		queryable = tmp
+	} else {
+		ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+		if ok {
+			queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+			ctx = ictx.Base()
+		}
+	}
 	fmt.Printf("tobe inserted on upsert: %s \n", tobeInsert)
 	query := fmt.Sprintf("INSERT INTO trx_table(`values`) VALUES('%s')", tobeInsert)
 	res, err := queryable.ExecContext(ctx, query)

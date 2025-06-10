@@ -11,6 +11,7 @@ import (
 
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
+	"github.com/louvri/gosl"
 )
 
 // loop
@@ -71,8 +72,8 @@ func Middleware(
 					var wg sync.WaitGroup
 					wg.Add(1)
 					go func() {
+						defer wg.Done()
 						response, err = inner(iteration)
-						wg.Done()
 					}()
 					wg.Wait()
 					return response, err
@@ -89,11 +90,12 @@ func Middleware(
 				ctx = context.WithValue(ctx, sys_key.SOF, true)
 			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				/*if _, err := kit.RunInTransaction(ctx, func(ctx context.Context) (context.Context, error) {
+				kit := gosl.New(ctx)
+				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
 						response, err = run(idx, ctx)
 						if err != nil {
-							return ctx, err
+							return err
 						}
 						idx++
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
@@ -101,11 +103,10 @@ func Middleware(
 							ctx = context.WithValue(ctx, sys_key.SOF, false)
 						}
 					}
-					return ctx, nil
+					return nil
 				}); err != nil {
 					return nil, err
-				}*/
-				return nil, errors.New("transaction is disabled in this version")
+				}
 			} else {
 				for !comparator(prev, curr) {
 					response, err = run(idx, ctx)
