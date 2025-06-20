@@ -90,7 +90,7 @@ func Middleware(
 				ctx = context.WithValue(ctx, sys_key.SOF, true)
 			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				kit := gosl.New(ctx)
+				ctx, kit := gosl.New(ctx)
 				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
 						response, err = run(idx, ctx)

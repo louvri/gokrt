@@ -150,7 +150,7 @@ func TestRunErrorTransaction(t *testing.T) {
 
 	mockDb := mock.NewMockDB(db)
 
-	kit := gosl.New(ctx)
+	ctx, kit := gosl.New(ctx)
 	if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 		var batchError []string
 		for _, data := range mock.Batch {
