@@ -67,7 +67,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 					return inner(index)
 				}
 				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					kit := gosl.New(ctx)
+					ctx, kit := gosl.New(ctx)
 					if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 						if arr, ok := ori.([]map[string]interface{}); ok {
 							for index, item := range arr {
