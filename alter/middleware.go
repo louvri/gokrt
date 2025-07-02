@@ -21,10 +21,13 @@ func Middleware(
 			}
 			var original interface{}
 			var err error
-			original, err = next(ctx, req)
-
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
-			if runOnError || err == nil && original != nil {
+			original, err = next(ctx, req)
+			if err != nil && !runOnError {
+				return original, err
+			}
+
+			if original != nil {
 				result := preprocessor(original, err)
 				if result != nil {
 					var altered interface{}
