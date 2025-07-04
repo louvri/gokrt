@@ -381,10 +381,6 @@ func reset(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = queryable.ExecContext(ctx, "DELETE FROM `hello_2`")
-	if err != nil {
-		return err
-	}
 
 	if err = kit.ContextSwitch(ctx, TKey); err == nil {
 		var queryable *gosl.Queryable
@@ -403,10 +399,6 @@ func reset(ctx context.Context) error {
 		}
 
 		_, err := queryable.ExecContext(ctx, "DELETE FROM `hello_1`")
-		if err != nil {
-			return err
-		}
-		_, err = queryable.ExecContext(ctx, "DELETE FROM `hello_2`")
 		if err != nil {
 			return err
 		}
