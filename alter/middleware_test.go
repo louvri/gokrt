@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/louvri/gokrt/after"
 	"github.com/louvri/gokrt/alter"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 )
@@ -189,5 +190,25 @@ func TestBeforeRun(t *testing.T) {
 			t.Logf("got %s but it should be 'second endpoint'", result)
 			t.FailNow()
 		}
+	}
+}
+
+func TestAlterAfter(t *testing.T) {
+	m := NewMock()
+	_, err := endpoint.Chain(
+		after.Middleware(m.First, func(data interface{}, err error) interface{} {
+			return data
+		}, nil),
+		alter.Middleware(m.Main, func(data interface{}, err error) interface{} {
+			t.Log(data)
+			return data
+		}, func(original, data interface{}, err error) (interface{}, error) {
+			t.Log(data)
+			return data, nil
+		}),
+	)(m.Error)(context.Background(), "")
+	if err == nil {
+		t.Log("should error")
+		t.FailNow()
 	}
 }
