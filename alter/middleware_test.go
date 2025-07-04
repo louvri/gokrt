@@ -248,6 +248,10 @@ func TestWithMultipleValueContext(t *testing.T) {
 			2*time.Minute,
 			2*time.Minute,
 		)))
+	if err := reset(ctx); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
 	resp, err := endpoint.Chain(
 		alter.Middleware(m.First, func(data interface{}, err error) interface{} {
 			return data
