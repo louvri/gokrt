@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	_multipart "github.com/louvri/gokrt/multipart"
 	"github.com/louvri/gokrt/sys_key"
 )
@@ -12,7 +13,11 @@ import (
 func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			eof := ctx.Value(sys_key.EOF)
+			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
+			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
+			eof := ictx.Get(sys_key.EOF)
 			if eof != nil && eof == "eof" {
 				return next(ctx, req)
 			} else {
@@ -22,7 +27,7 @@ func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 				}
 				var ok bool
 				var file map[string]interface{}
-				if file, ok = ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); !ok {
+				if file, ok = ictx.Get(sys_key.FILE_KEY).(map[string]interface{}); !ok {
 					file = make(map[string]interface{})
 				}
 				if err := con.Connect(ctx); err != nil {
@@ -32,11 +37,12 @@ func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 				ctx = context.WithValue(ctx, sys_key.FILE_KEY, file)
 
 				var fileObject map[string]interface{}
-				if fileObject, ok = ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); !ok {
+				if fileObject, ok = ictx.Get(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); !ok {
 					fileObject = make(map[string]interface{})
 				}
 				fileObject[con.Name()] = con
-				ctx = context.WithValue(ctx, sys_key.FILE_OBJECT_KEY, fileObject)
+				ictx.Set(sys_key.FILE_OBJECT_KEY, fileObject)
+				// ctx = context.WithValue(ctx, sys_key.FILE_OBJECT_KEY, fileObject)
 				return next(ctx, req)
 			}
 		}

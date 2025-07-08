@@ -9,7 +9,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/alter_with_cache"
 	"github.com/louvri/gokrt/cache"
-	"github.com/louvri/gokrt/loop_array"
 )
 
 type Mock interface {
@@ -87,18 +86,20 @@ func TestAlterWithCache(t *testing.T) {
 		cache.Middleware(m.Third, func(req interface{}) interface{} {
 			return "req 1"
 		}, "key-2"),
-		loop_array.Middleware(
-			endpoint.Chain(
-				alter_with_cache.Middleware(func(data interface{}, err error) interface{} {
-					return "alter1"
-				}, func(original, data, cache interface{}, err error) (interface{}, error) {
-					return "alter1", nil
-				}),
-			)(m.Third), func(data interface{}) interface{} {
-				return data
-			}, nil,
-		),
-	)(m.Loop)(context.Background(), Data{
+		alter_with_cache.Middleware(func(data interface{}, err error) interface{} {
+			return data
+		}, func(original, data, cache interface{}, err error) (interface{}, error) {
+			var injected Data
+
+			if cached, ok := cache.(map[string]interface{}); ok {
+				injected.Cache = cached
+				injected.Response = data.(string)
+				injected.Status = "injected"
+			}
+
+			return injected, err
+		}),
+	)(m.Main)(context.Background(), Data{
 		Request: "request",
 	})
 
