@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
 	"github.com/louvri/gokrt/sys_key"
 )
@@ -22,7 +23,12 @@ func Middleware(
 			original := req
 			var err error
 
-			inmem := ctx.Value(sys_key.CACHE_KEY)
+			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
+			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
+			inmem := ictx.Get(sys_key.CACHE_KEY)
+
 			if inmemCache, ok := inmem.(map[string]interface{}); ok {
 				modified := preprocessor(original, err)
 				if modified != nil {

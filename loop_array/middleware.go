@@ -7,7 +7,9 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
+	"github.com/louvri/gokrt/sys_key"
 	"github.com/louvri/gosl"
 )
 
@@ -24,6 +26,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
 				kit = gosl.New(ctx)
 			}*/
+			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
 			ori, err := next(ctx, req)
 			if err != nil {
 				return nil, err

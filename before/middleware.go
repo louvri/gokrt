@@ -5,8 +5,9 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/louvri/gokrt/icontext"
+	icontext "github.com/louvri/gokrt/context"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
+	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(
@@ -20,6 +21,10 @@ func Middleware(
 			for _, option := range opts {
 				opt[option] = true
 			}
+
+			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
 			var result interface{}
 			if preprocessor != nil {
 				result = preprocessor(req)
@@ -27,9 +32,6 @@ func Middleware(
 				result = req
 			}
 			if result != nil {
-				if _, ok := ctx.(*icontext.CopyContext); !ok {
-					ctx = icontext.New(ctx)
-				}
 				if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
 					var wg sync.WaitGroup
 					wg.Add(1)
