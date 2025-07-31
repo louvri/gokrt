@@ -17,12 +17,12 @@ import (
 
 // loop
 func Middleware(
-	comparator func(prev, curr interface{}) bool,
-	modifier func(req interface{}, next interface{}) interface{},
-	postprocessor func(original, data interface{}, err error),
+	comparator func(prev, curr any) bool,
+	modifier func(req any, next any) any,
+	postprocessor func(original, data any, err error),
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
@@ -33,19 +33,19 @@ func Middleware(
 					kit = gosl.New(ctx)
 				}
 			*/
-			var prev, curr interface{}
+			var prev, curr any
 			var err error
-			var response interface{}
-			curr = make([]map[string]interface{}, 0)
-			errorCollection := make([]map[string]interface{}, 0)
+			var response any
+			curr = make([]map[string]any, 0)
+			errorCollection := make([]map[string]any, 0)
 
 			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
 
-			run := func(iteration int, ctx context.Context) (interface{}, error) {
-				inner := func(iteration int) (interface{}, error) {
+			run := func(iteration int, ctx context.Context) (any, error) {
+				inner := func(iteration int) (any, error) {
 					prev = curr
 					currReq := modifier(req, curr)
 					response, err = next(ctx, currReq)
@@ -59,7 +59,7 @@ func Middleware(
 						if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 							return nil, err
 						} else {
-							errorCollection = append(errorCollection, map[string]interface{}{
+							errorCollection = append(errorCollection, map[string]any{
 								"iteration": iteration,
 								"error":     err.Error(),
 							})
@@ -74,7 +74,7 @@ func Middleware(
 				}
 
 				if opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] {
-					var response interface{}
+					var response any
 					var err error
 					var wg sync.WaitGroup
 					wg.Add(1)

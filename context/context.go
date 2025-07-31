@@ -96,7 +96,7 @@ func (c *Context) Deadline() (time.Time, bool) {
 }
 func (c *Context) Done() <-chan struct{} { return nil }
 
-func (c *Context) Value(key interface{}) interface{} {
+func (c *Context) Value(key any) any {
 	return c.base.Value(key)
 }
 func (c *Context) Err() error {

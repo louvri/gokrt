@@ -20,17 +20,17 @@ var test key = 1
 func TestAfter(t *testing.T) {
 	ctx := context.WithValue(context.Background(), test, 1)
 	response, err := endpoint.Chain(after.Middleware(
-		func(ctx context.Context, req interface{}) (interface{}, error) {
+		func(ctx context.Context, req any) (any, error) {
 			fmt.Printf("HELLOOO %v\n", ctx.Value(test))
 			fmt.Println(req)
 			time.Sleep(1000)
 			return nil, nil
 		},
-		func(data interface{}, err error) interface{} {
+		func(data any, err error) any {
 			return data
 		},
 		nil,
-	))(func(ctx context.Context, req interface{}) (interface{}, error) {
+	))(func(ctx context.Context, req any) (any, error) {
 		a := 0
 		for i := 0; i < 10000; i++ {
 			a++
@@ -48,27 +48,27 @@ func TestOnEof(t *testing.T) {
 	response, err := endpoint.Chain(
 		on_eof.Middleware(
 			alter.Middleware(
-				func(ctx context.Context, req interface{}) (interface{}, error) {
+				func(ctx context.Context, req any) (any, error) {
 					return "hello world 1", nil
 				},
-				func(data interface{}, err error) interface{} {
+				func(data any, err error) any {
 					return data
 				},
-				func(data1, data2 interface{}, err error) (interface{}, error) {
+				func(data1, data2 any, err error) (any, error) {
 					return data2, nil
 				},
 			),
 			after.Middleware(
-				func(ctx context.Context, req interface{}) (interface{}, error) {
+				func(ctx context.Context, req any) (any, error) {
 					return "hello world 2", nil
 				},
-				func(data interface{}, err error) interface{} {
+				func(data any, err error) any {
 					return data
 				},
 				nil,
 			),
 		),
-	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+	)(func(ctx context.Context, req any) (any, error) {
 		return "satu", nil
 	})(ctx, -1)
 	if response.(string) != "hello world 1" {
@@ -83,18 +83,18 @@ func TestOnEofWhileError(t *testing.T) {
 	response, err := endpoint.Chain(
 		on_eof.Middleware(
 			alter.Middleware(
-				func(ctx context.Context, req interface{}) (interface{}, error) {
+				func(ctx context.Context, req any) (any, error) {
 					return "hello world", nil
 				},
-				func(data interface{}, err error) interface{} {
+				func(data any, err error) any {
 					return data
 				},
-				func(data1, data2 interface{}, err error) (interface{}, error) {
+				func(data1, data2 any, err error) (any, error) {
 					return data2, nil
 				},
 			),
 		),
-	)(func(ctx context.Context, req interface{}) (interface{}, error) {
+	)(func(ctx context.Context, req any) (any, error) {
 		return "satu", nil
 	})(ctx, -1)
 	if response.(string) != "hello world" {

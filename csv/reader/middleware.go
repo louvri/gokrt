@@ -13,15 +13,15 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(filename string, size int, decoder func(data interface{}) interface{}, ignoreError bool, splitterSym ...string) endpoint.Middleware {
+func Middleware(filename string, size int, decoder func(data any) any, ignoreError bool, splitterSym ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			splitter := ";"
 			if len(splitterSym) > 0 && splitterSym[0] != "" {
 				splitter = splitterSym[0]
 			}
 			var reader io.Reader
-			if tmp, ok := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil && ok {
+			if tmp, ok := ctx.Value(sys_key.FILE_KEY).(map[string]any); tmp != nil && ok {
 				reader = tmp[filename].(io.Reader)
 			} else {
 				return nil, nil
@@ -29,11 +29,11 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 			scanner := bufio.NewScanner(reader)
 			first := true
 			var columns []string
-			exec := func(ctx context.Context, data map[string]interface{}) (interface{}, error) {
+			exec := func(ctx context.Context, data map[string]any) (any, error) {
 				isEmpty := len(data) == 0
 				if !isEmpty {
 					var err error
-					var response interface{}
+					var response any
 					if decoder != nil {
 						response, err = next(ctx, decoder(data))
 					} else {
@@ -47,7 +47,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 				return nil, nil
 			}
 			var err error
-			var response interface{}
+			var response any
 			nextErr := make([]error, 0)
 			lineNumber := 1
 			for scanner.Scan() {
@@ -68,7 +68,7 @@ func Middleware(filename string, size int, decoder func(data interface{}) interf
 						isempty = isempty && (item == "" || item == " ")
 					}
 					if !isempty {
-						data := make(map[string]interface{})
+						data := make(map[string]any)
 						for i, column := range columns {
 							data[column] = values[i]
 						}

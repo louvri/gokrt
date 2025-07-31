@@ -41,7 +41,7 @@ func TestMiddleware_WithEOF(t *testing.T) {
 	mockConn1.On("Close").Return(nil)
 	mockConn2.On("Close").Return(nil)
 
-	fileObjects := map[string]interface{}{
+	fileObjects := map[string]any{
 		"file1": mockConn1,
 		"file2": mockConn2,
 		"file3": mockConn3,
@@ -54,7 +54,7 @@ func TestMiddleware_WithEOF(t *testing.T) {
 
 	ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
 	}
 
@@ -83,7 +83,7 @@ func TestMiddleware_WithoutEOF(t *testing.T) {
 	mockConn := &MockConnection{driver: "multipart"}
 	mockConn.On("Close").Return(nil)
 
-	fileObjects := map[string]interface{}{
+	fileObjects := map[string]any{
 		"file1": mockConn,
 	}
 
@@ -94,7 +94,7 @@ func TestMiddleware_WithoutEOF(t *testing.T) {
 
 	ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
 	}
 
@@ -117,7 +117,7 @@ func TestMiddleware_WithoutInternalContext(t *testing.T) {
 	// Arrange
 	ctx := context.Background() // No internal context
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		// Verify internal context was created
 		ictx, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
 		assert.True(t, ok)
@@ -140,7 +140,7 @@ func TestMiddleware_WithInvalidInternalContext(t *testing.T) {
 	// Arrange
 	ctx := context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, "invalid_context")
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		// Verify new internal context was created
 		ictx, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
 		assert.True(t, ok)
@@ -168,7 +168,7 @@ func TestMiddleware_WithoutFileObjects(t *testing.T) {
 
 	ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
 	}
 
@@ -193,7 +193,7 @@ func TestMiddleware_WithInvalidFileObjects(t *testing.T) {
 
 	ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
 	}
 
@@ -217,7 +217,7 @@ func TestMiddleware_MixedConnectionTypes(t *testing.T) {
 
 	multipartConn.On("Close").Return(nil)
 
-	fileObjects := map[string]interface{}{
+	fileObjects := map[string]any{
 		"multipart_file": multipartConn,
 		"db_connection":  databaseConn,
 		"http_client":    httpConn,
@@ -232,7 +232,7 @@ func TestMiddleware_MixedConnectionTypes(t *testing.T) {
 
 	ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
 	}
 
@@ -259,7 +259,7 @@ func TestMiddleware_MixedConnectionTypes(t *testing.T) {
 func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 	tests := []struct {
 		name        string
-		eofValue    interface{}
+		eofValue    any
 		shouldClose bool
 	}{
 		{"EOF with string 'true'", "true", true},
@@ -279,7 +279,7 @@ func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 				mockConn.On("Close").Return(nil)
 			}
 
-			fileObjects := map[string]interface{}{
+			fileObjects := map[string]any{
 				"file1": mockConn,
 			}
 
@@ -290,7 +290,7 @@ func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 
 			ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-			baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			baseEndpoint := func(ctx context.Context, req any) (any, error) {
 				return "success", nil
 			}
 
@@ -322,7 +322,7 @@ func TestMiddleware_ErrorPropagation(t *testing.T) {
 	ictx := icontext.New(context.Background())
 	ctx := context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return nil, expectedError
 	}
 
@@ -344,7 +344,7 @@ func TestMiddleware_ConnectionCloseError(t *testing.T) {
 	mockConn := &MockConnection{driver: "multipart"}
 	mockConn.On("Close").Return(closeError)
 
-	fileObjects := map[string]interface{}{
+	fileObjects := map[string]any{
 		"file1": mockConn,
 	}
 
@@ -355,7 +355,7 @@ func TestMiddleware_ConnectionCloseError(t *testing.T) {
 
 	ctx = context.WithValue(context.Background(), sys_key.INTERNAL_CONTEXT, ictx)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
 	}
 

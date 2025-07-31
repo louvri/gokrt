@@ -24,16 +24,16 @@ var tmpIndex = -1
 func TestLoopNextNotIgnoreError(t *testing.T) {
 	m := mock.NewMock()
 	_, err := endpoint.Chain(
-		loop_next.Middleware(func(prev, curr interface{}) bool {
+		loop_next.Middleware(func(prev, curr any) bool {
 			comparator := len(mock.Err.Error()) <= m.GetCounter()
 			m.Increment(1)
 			return comparator
-		}, func(req, next interface{}) interface{} {
+		}, func(req, next any) any {
 			return tmpIndex
-		}, func(original, data interface{}, err error) {
+		}, func(original, data any, err error) {
 			// no op
 		}),
-		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
+		after.Middleware(m.Executor, func(data any, err error) any {
 			if data != nil && err == nil {
 				return data
 			}
@@ -49,16 +49,16 @@ func TestLoopNextNotIgnoreError(t *testing.T) {
 func TestLoopNext(t *testing.T) {
 	m := mock.NewMock()
 	_, err := endpoint.Chain(
-		loop_next.Middleware(func(prev, curr interface{}) bool {
+		loop_next.Middleware(func(prev, curr any) bool {
 			m.Increment(1)
 			comparator := len(mock.Batch) <= m.GetCounter()
 			return comparator
-		}, func(req, next interface{}) interface{} {
+		}, func(req, next any) any {
 			return m.GetCounter()
-		}, func(original, data interface{}, err error) {
+		}, func(original, data any, err error) {
 			// no op
 		}, option.RUN_WITH_ERROR),
-		after.Middleware(m.Executor, func(data interface{}, err error) interface{} {
+		after.Middleware(m.Executor, func(data any, err error) any {
 			if data != nil && err == nil {
 				return data
 			}
@@ -71,7 +71,7 @@ func TestLoopNext(t *testing.T) {
 	}
 
 	if err != nil {
-		decoded := make([]map[string]interface{}, 0)
+		decoded := make([]map[string]any, 0)
 		if curr := json.Unmarshal([]byte(err.Error()), &decoded); curr != nil {
 			t.Log("error should be able decoded to array interface")
 			t.FailNow()
@@ -104,18 +104,18 @@ func TestRunTransaction(t *testing.T) {
 	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
 
 	_, err = endpoint.Chain(
-		loop_next.Middleware(func(prev, curr interface{}) bool {
+		loop_next.Middleware(func(prev, curr any) bool {
 			m.Increment(1)
 			comparator := len(mock.Batch) <= m.GetCounter()
 			return comparator
-		}, func(req, next interface{}) interface{} {
+		}, func(req, next any) any {
 			res := m.GetCounter()
 			return res
-		}, func(original, data interface{}, err error) {
+		}, func(original, data any, err error) {
 			// no op
 		}, option.RUN_IN_TRANSACTION),
 		after.Middleware(
-			mDB.Upsert, func(data interface{}, err error) interface{} {
+			mDB.Upsert, func(data any, err error) any {
 				if data != nil && err == nil {
 					return data
 				}

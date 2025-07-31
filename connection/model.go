@@ -11,7 +11,7 @@ type Connection interface {
 	Close()
 	Writer() io.Writer
 	Reader() io.Reader
-	Handler() interface{}
+	Handler() any
 	Name() string
 	Driver() string
 }

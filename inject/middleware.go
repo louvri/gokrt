@@ -11,12 +11,12 @@ import (
 
 func Middleware(
 	e endpoint.Endpoint,
-	modifier func(original interface{}, data interface{}, err error) (interface{}, error),
+	modifier func(original any, data any, err error) (any, error),
 	opts ...option.Option,
 ) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			var response, modified interface{}
+		return func(ctx context.Context, req any) (any, error) {
+			var response, modified any
 			var err error
 			config := map[option.Option]bool{}
 			if len(opts) > 0 {

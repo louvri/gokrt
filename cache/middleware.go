@@ -8,9 +8,10 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interface{}, key ...string) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+<<<<<<< HEAD
+		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
 			var ok bool
 			if _, ok = ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
@@ -20,6 +21,10 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 			ictx = ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
 			_cacheFromContext := ictx.Get(sys_key.CACHE_KEY)
 
+=======
+		return func(ctx context.Context, req any) (any, error) {
+			_cacheFromContext := ctx.Value(sys_key.CACHE_KEY)
+>>>>>>> main
 			_key := ""
 			if len(key) > 0 {
 				_key = key[0]
@@ -34,14 +39,14 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req interface{}) interfac
 					return nil, err
 				}
 				var ok bool
-				var tobeCached interface{}
-				var cache map[string]interface{}
-				if cache, ok = _cacheFromContext.(map[string]interface{}); ok {
+				var tobeCached any
+				var cache map[string]any
+				if cache, ok = _cacheFromContext.(map[string]any); ok {
 					cache[_key] = data
 					tobeCached = cache
 				} else {
 					if _key != "" {
-						cache = make(map[string]interface{})
+						cache = make(map[string]any)
 						cache[_key] = data
 						tobeCached = cache
 					} else {

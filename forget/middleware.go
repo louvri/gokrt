@@ -10,16 +10,21 @@ import (
 
 func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	type cache struct {
-		response interface{}
+		response any
 		err      error
 	}
 	var c cache
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+<<<<<<< HEAD
+		return func(ctx context.Context, req any) (any, error) {
 			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
-			outer := func(ctx context.Context, req interface{}) (interface{}, error) {
+			outer := func(ctx context.Context, req any) (any, error) {
+=======
+		return func(ctx context.Context, req any) (any, error) {
+			outer := func(ctx context.Context, req any) (any, error) {
+>>>>>>> main
 				resp, err := next(ctx, req)
 				c.response = resp
 				c.err = err

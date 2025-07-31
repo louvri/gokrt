@@ -18,7 +18,7 @@ func TestMiddleware_WithEOFContext(t *testing.T) {
 	middleware1 := createTestMiddleware("middleware1", &executionOrder)
 	middleware2 := createTestMiddleware("middleware2", &executionOrder)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		executionOrder = append(executionOrder, "base_endpoint")
 		return "base_result", nil
 	}
@@ -44,7 +44,7 @@ func TestMiddleware_WithoutEOFContext(t *testing.T) {
 	middleware1 := createTestMiddleware("middleware1", &executionOrder)
 	middleware2 := createTestMiddleware("middleware2", &executionOrder)
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		executionOrder = append(executionOrder, "base_endpoint")
 		return "normal_result", nil
 	}
@@ -67,7 +67,7 @@ func TestMiddleware_EmptyMiddlewareList(t *testing.T) {
 	tests := []struct {
 		name     string
 		ctx      context.Context
-		expected interface{}
+		expected any
 	}{
 		{
 			name:     "with EOF context and no middlewares",
@@ -84,7 +84,7 @@ func TestMiddleware_EmptyMiddlewareList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
-			baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			baseEndpoint := func(ctx context.Context, req any) (any, error) {
 				return "base_result", nil
 			}
 
@@ -103,7 +103,7 @@ func TestMiddleware_EmptyMiddlewareList(t *testing.T) {
 func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 	tests := []struct {
 		name          string
-		eofValue      interface{}
+		eofValue      any
 		shouldTrigger bool
 	}{
 		{"EOF with true", true, true},
@@ -118,13 +118,13 @@ func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 			// Arrange
 			var middlewareExecuted bool
 			middleware1 := func(next endpoint.Endpoint) endpoint.Endpoint {
-				return func(ctx context.Context, req interface{}) (interface{}, error) {
+				return func(ctx context.Context, req any) (any, error) {
 					middlewareExecuted = true
 					return next(ctx, req)
 				}
 			}
 
-			baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			baseEndpoint := func(ctx context.Context, req any) (any, error) {
 				return "base_result", nil
 			}
 
@@ -168,12 +168,12 @@ func TestMiddleware_ErrorPropagation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			errorMiddleware := func(next endpoint.Endpoint) endpoint.Endpoint {
-				return func(ctx context.Context, req interface{}) (interface{}, error) {
+				return func(ctx context.Context, req any) (any, error) {
 					return nil, expectedError
 				}
 			}
 
-			baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			baseEndpoint := func(ctx context.Context, req any) (any, error) {
 				return nil, expectedError // This should not be reached in EOF case
 			}
 
@@ -195,7 +195,7 @@ func TestMiddleware_MiddlewareOrder(t *testing.T) {
 	var executionOrder []string
 
 	middleware1 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			executionOrder = append(executionOrder, "middleware1_start")
 			result, err := next(ctx, req)
 			executionOrder = append(executionOrder, "middleware1_end")
@@ -204,7 +204,7 @@ func TestMiddleware_MiddlewareOrder(t *testing.T) {
 	}
 
 	middleware2 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			executionOrder = append(executionOrder, "middleware2_start")
 			result, err := next(ctx, req)
 			executionOrder = append(executionOrder, "middleware2_end")
@@ -213,7 +213,7 @@ func TestMiddleware_MiddlewareOrder(t *testing.T) {
 	}
 
 	middleware3 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			executionOrder = append(executionOrder, "middleware3_start")
 			result, err := next(ctx, req)
 			executionOrder = append(executionOrder, "middleware3_end")
@@ -221,7 +221,7 @@ func TestMiddleware_MiddlewareOrder(t *testing.T) {
 		}
 	}
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		executionOrder = append(executionOrder, "base_endpoint")
 		return "result", nil
 	}
@@ -253,7 +253,7 @@ func TestMiddleware_SingleMiddleware(t *testing.T) {
 	tests := []struct {
 		name                    string
 		ctx                     context.Context
-		expectedResult          interface{}
+		expectedResult          any
 		shouldExecuteMiddleware bool
 	}{
 		{
@@ -275,13 +275,13 @@ func TestMiddleware_SingleMiddleware(t *testing.T) {
 			// Arrange
 			var middlewareExecuted bool
 			middleware := func(next endpoint.Endpoint) endpoint.Endpoint {
-				return func(ctx context.Context, req interface{}) (interface{}, error) {
+				return func(ctx context.Context, req any) (any, error) {
 					middlewareExecuted = true
 					return next(ctx, req)
 				}
 			}
 
-			baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+			baseEndpoint := func(ctx context.Context, req any) (any, error) {
 				return "base_result", nil
 			}
 
@@ -300,28 +300,28 @@ func TestMiddleware_SingleMiddleware(t *testing.T) {
 // TestMiddleware_RequestPropagation tests that request is properly passed through
 func TestMiddleware_RequestPropagation(t *testing.T) {
 	// Arrange
-	testRequest := map[string]interface{}{
+	testRequest := map[string]any{
 		"user_id": 123,
 		"action":  "test",
 	}
 
-	var receivedRequests []interface{}
+	var receivedRequests []any
 
 	middleware1 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			receivedRequests = append(receivedRequests, req)
 			return next(ctx, req)
 		}
 	}
 
 	middleware2 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			receivedRequests = append(receivedRequests, req)
 			return next(ctx, req)
 		}
 	}
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		receivedRequests = append(receivedRequests, req)
 		return "result", nil
 	}
@@ -344,7 +344,7 @@ func TestMiddleware_RequestPropagation(t *testing.T) {
 // Helper function to create test middleware that tracks execution order
 func createTestMiddleware(name string, executionOrder *[]string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			*executionOrder = append(*executionOrder, name)
 			return next(ctx, req)
 		}
@@ -354,18 +354,18 @@ func createTestMiddleware(name string, executionOrder *[]string) endpoint.Middle
 // Benchmark tests
 func BenchmarkMiddleware_WithEOF(b *testing.B) {
 	middleware1 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			return next(ctx, req)
 		}
 	}
 
 	middleware2 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			return next(ctx, req)
 		}
 	}
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "result", nil
 	}
 
@@ -380,18 +380,18 @@ func BenchmarkMiddleware_WithEOF(b *testing.B) {
 
 func BenchmarkMiddleware_WithoutEOF(b *testing.B) {
 	middleware1 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			return next(ctx, req)
 		}
 	}
 
 	middleware2 := func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			return next(ctx, req)
 		}
 	}
 
-	baseEndpoint := func(ctx context.Context, req interface{}) (interface{}, error) {
+	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "result", nil
 	}
 
