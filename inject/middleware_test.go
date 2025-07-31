@@ -11,11 +11,11 @@ import (
 )
 
 type Mock interface {
-	Main(ctx context.Context, request interface{}) (interface{}, error)
-	First(ctx context.Context, request interface{}) (interface{}, error)
-	Inject(ctx context.Context, request interface{}) (interface{}, error)
-	Third(ctx context.Context, request interface{}) (interface{}, error)
-	Error(ctx context.Context, request interface{}) (interface{}, error)
+	Main(ctx context.Context, request any) (any, error)
+	First(ctx context.Context, request any) (any, error)
+	Inject(ctx context.Context, request any) (any, error)
+	Third(ctx context.Context, request any) (any, error)
+	Error(ctx context.Context, request any) (any, error)
 }
 type mock struct {
 	logger *log.Logger
@@ -33,7 +33,7 @@ type Data struct {
 	Injected []string
 }
 
-func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Main(ctx context.Context, request any) (any, error) {
 	if data, ok := request.(Data); ok {
 		if len(data.Injected) >= 2 && data.Status != "finale" {
 			return nil, errors.New("result should be finale")
@@ -51,11 +51,11 @@ func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, erro
 	return "main", nil
 }
 
-func (m *mock) First(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) First(ctx context.Context, request any) (any, error) {
 	return "first inject endpoint", nil
 }
-func (m *mock) Inject(ctx context.Context, request interface{}) (interface{}, error) {
-	if result, ok := request.(map[string]interface{}); ok {
+func (m *mock) Inject(ctx context.Context, request any) (any, error) {
+	if result, ok := request.(map[string]any); ok {
 		result["status"] = "injected"
 		return result, nil
 	} else if result, ok := request.(Data); ok {
@@ -68,10 +68,10 @@ func (m *mock) Inject(ctx context.Context, request interface{}) (interface{}, er
 	}
 	return "alter inject endpoint", nil
 }
-func (m *mock) Third(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Third(ctx context.Context, request any) (any, error) {
 	return "third inject endpoint", nil
 }
-func (m *mock) Error(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Error(ctx context.Context, request any) (any, error) {
 	return nil, errors.New("it's error")
 }
 
@@ -79,10 +79,10 @@ func TestInjection(t *testing.T) {
 	m := NewMock()
 
 	result, err := endpoint.Chain(
-		inject.Middleware(m.Inject, func(original, data interface{}, err error) (interface{}, error) {
+		inject.Middleware(m.Inject, func(original, data any, err error) (any, error) {
 			return data, nil
 		}),
-		inject.Middleware(m.Inject, func(original, data interface{}, err error) (interface{}, error) {
+		inject.Middleware(m.Inject, func(original, data any, err error) (any, error) {
 			return data, nil
 		}),
 	)(m.Main)(context.Background(), Data{

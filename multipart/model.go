@@ -37,7 +37,7 @@ func (f *File) Cancel() {
 func (f *File) Close() {
 	f.reader.Close()
 }
-func (f *File) Handler() interface{} {
+func (f *File) Handler() any {
 	return f.handler
 }
 func (f *File) Reader() io.Reader {

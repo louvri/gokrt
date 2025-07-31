@@ -15,7 +15,7 @@ import (
 
 func Middleware(filename string, columns []string, cancelOnError bool, splitter ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			splitterRune := ';'
 			if len(splitter) > 0 && splitter[0] != "" {
 				r := []rune(splitter[0])
@@ -23,7 +23,7 @@ func Middleware(filename string, columns []string, cancelOnError bool, splitter 
 			}
 			response, responseError := next(ctx, req)
 			if responseError != nil && cancelOnError {
-				if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
+				if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					if con, ok := tmp[filename].(connection.Connection); ok {
 						con.Cancel()
 					}
@@ -33,7 +33,7 @@ func Middleware(filename string, columns []string, cancelOnError bool, splitter 
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof != "" {
 				if eof != "eof" {
-					if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
+					if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 						if con, ok := tmp[filename].(connection.Connection); ok {
 							con.Cancel()
 						}
@@ -42,16 +42,16 @@ func Middleware(filename string, columns []string, cancelOnError bool, splitter 
 				return response, responseError
 			}
 			var writer *bufio.Writer
-			if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil {
+			if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]any); tmp != nil {
 				writer = bufio.NewWriter(tmp[filename].(io.Writer))
 			} else {
 				return nil, errors.New("csv_writer_middleware: connection not initialized")
 			}
-			var tobeRendered []map[string]interface{}
-			if tmp, ok := response.(map[string]interface{}); ok {
-				tobeRendered = make([]map[string]interface{}, 0)
+			var tobeRendered []map[string]any
+			if tmp, ok := response.(map[string]any); ok {
+				tobeRendered = make([]map[string]any, 0)
 				tobeRendered = append(tobeRendered, tmp)
-			} else if tmp, ok := response.([]map[string]interface{}); ok {
+			} else if tmp, ok := response.([]map[string]any); ok {
 				tobeRendered = tmp
 			}
 			if first, ok := ctx.Value(sys_key.SOF).(bool); ok {

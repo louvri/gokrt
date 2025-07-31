@@ -12,10 +12,10 @@ import (
 
 func Middleware(bucket string, expiry time.Duration) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof != "" {
-				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
+				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					opts := &storage.SignedURLOptions{
 						Scheme:  storage.SigningSchemeV4,
 						Method:  "GET",

@@ -9,7 +9,7 @@ import (
 var Err = errors.New("error appear")
 var instance *mock
 
-var Batch = []interface{}{
+var Batch = []any{
 	"1stIndex",
 	"2ndIndex",
 	Err,
@@ -27,7 +27,7 @@ var Batch = []interface{}{
 	Err,
 }
 
-var NoErrBatch = []interface{}{
+var NoErrBatch = []any{
 	"1stIndex",
 	"2ndIndex",
 	"3rdIndex",
@@ -41,9 +41,9 @@ var NoErrBatch = []interface{}{
 }
 
 type Mock interface {
-	Main(ctx context.Context, request interface{}) (interface{}, error)
-	MainNoErr(ctx context.Context, request interface{}) (interface{}, error)
-	Executor(ctx context.Context, request interface{}) (interface{}, error)
+	Main(ctx context.Context, request any) (any, error)
+	MainNoErr(ctx context.Context, request any) (any, error)
+	Executor(ctx context.Context, request any) (any, error)
 	GetCounter() int
 	Increment(int)
 }
@@ -63,7 +63,7 @@ func NewMock() Mock {
 	return instance
 }
 
-func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Main(ctx context.Context, request any) (any, error) {
 
 	current := m.counter
 	if current >= len(Batch) {
@@ -75,7 +75,7 @@ func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, erro
 	return Batch[current], nil
 }
 
-func (m *mock) MainNoErr(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) MainNoErr(ctx context.Context, request any) (any, error) {
 
 	current := m.counter
 	if current >= len(NoErrBatch) {
@@ -84,7 +84,7 @@ func (m *mock) MainNoErr(ctx context.Context, request interface{}) (interface{},
 	return NoErrBatch[current], nil
 }
 
-func (m *mock) Executor(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Executor(ctx context.Context, request any) (any, error) {
 	m.logger.Printf("output exector endpoint: %s", request)
 	if err, ok := request.(error); ok && err != nil {
 		return nil, err

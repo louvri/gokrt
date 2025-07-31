@@ -14,11 +14,11 @@ import (
 
 func Middleware(filename string, columns []string, cancelOnError bool) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof == "eof" {
 				var writer *bufio.Writer
-				if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil {
+				if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]any); tmp != nil {
 					writer = bufio.NewWriter(tmp[filename].(io.Writer))
 				} else {
 					return nil, errors.New("json_writer_middleware: connection not initialized")
@@ -35,7 +35,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 			}
 			response, responseError := next(ctx, req)
 			if responseError != nil && cancelOnError {
-				if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
+				if tmp, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					if con, ok := tmp[filename].(connection.Connection); ok {
 						con.Cancel()
 					}
@@ -46,7 +46,7 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				return response, responseError
 			}
 			var writer *bufio.Writer
-			if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); tmp != nil {
+			if tmp := ctx.Value(sys_key.FILE_KEY).(map[string]any); tmp != nil {
 				writer = bufio.NewWriter(tmp[filename].(io.Writer))
 			} else {
 				return nil, errors.New("json_writer_middleware: connection not initialized")
@@ -58,15 +58,15 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 				writer.WriteRune('\n')
 				shouldAddComma = false
 			}
-			var tobeRendered []map[string]interface{}
-			if tmp, ok := response.(map[string]interface{}); ok {
-				tobeRendered = make([]map[string]interface{}, 0)
+			var tobeRendered []map[string]any
+			if tmp, ok := response.(map[string]any); ok {
+				tobeRendered = make([]map[string]any, 0)
 				tobeRendered = append(tobeRendered, tmp)
-			} else if tmp, ok := response.([]map[string]interface{}); ok {
+			} else if tmp, ok := response.([]map[string]any); ok {
 				tobeRendered = tmp
 			}
 			for _, data := range tobeRendered {
-				filtered := make(map[string]interface{})
+				filtered := make(map[string]any)
 				for _, key := range columns {
 					filtered[key] = data[key]
 				}

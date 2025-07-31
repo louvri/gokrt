@@ -11,16 +11,16 @@ import (
 
 func Middleware(
 	e endpoint.Endpoint,
-	preprocessor func(data interface{}) interface{},
-	postprocessor func(data interface{}, err error),
+	preprocessor func(data any) any,
+	postprocessor func(data any, err error),
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
 			}
-			var result interface{}
+			var result any
 			if preprocessor != nil {
 				result = preprocessor(req)
 			} else {

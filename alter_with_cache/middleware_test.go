@@ -13,13 +13,13 @@ import (
 )
 
 type Mock interface {
-	Loop(ctx context.Context, request interface{}) (interface{}, error)
-	Main(ctx context.Context, request interface{}) (interface{}, error)
-	First(ctx context.Context, request interface{}) (interface{}, error)
-	Alter(ctx context.Context, request interface{}) (interface{}, error)
-	Third(ctx context.Context, request interface{}) (interface{}, error)
-	Error(ctx context.Context, request interface{}) (interface{}, error)
-	Forth(ctx context.Context, request interface{}) (interface{}, error)
+	Loop(ctx context.Context, request any) (any, error)
+	Main(ctx context.Context, request any) (any, error)
+	First(ctx context.Context, request any) (any, error)
+	Alter(ctx context.Context, request any) (any, error)
+	Third(ctx context.Context, request any) (any, error)
+	Error(ctx context.Context, request any) (any, error)
+	Forth(ctx context.Context, request any) (any, error)
 }
 type mock struct {
 	logger *log.Logger
@@ -32,25 +32,25 @@ func NewMock() Mock {
 }
 
 type Data struct {
-	Cache    map[string]interface{}
+	Cache    map[string]any
 	Request  string
 	Altered  string
 	Response string
 	Status   string
 }
 
-func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Main(ctx context.Context, request any) (any, error) {
 	return "main", nil
 }
 
-func (m *mock) First(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) First(ctx context.Context, request any) (any, error) {
 	return "first inject endpoint", nil
 }
-func (m *mock) Forth(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Forth(ctx context.Context, request any) (any, error) {
 	return "forth", nil
 }
-func (m *mock) Alter(ctx context.Context, request interface{}) (interface{}, error) {
-	if result, ok := request.(map[string]interface{}); ok {
+func (m *mock) Alter(ctx context.Context, request any) (any, error) {
+	if result, ok := request.(map[string]any); ok {
 		result["status"] = "injected"
 		return result, nil
 	} else if result, ok := request.(Data); ok {
@@ -59,15 +59,15 @@ func (m *mock) Alter(ctx context.Context, request interface{}) (interface{}, err
 	}
 	return "alter inject endpoint", nil
 }
-func (m *mock) Third(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Third(ctx context.Context, request any) (any, error) {
 	return "third inject endpoint", nil
 }
-func (m *mock) Error(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Error(ctx context.Context, request any) (any, error) {
 	return nil, errors.New("it's error")
 }
 
-func (m *mock) Loop(ctx context.Context, request interface{}) (interface{}, error) {
-	return []interface{}{
+func (m *mock) Loop(ctx context.Context, request any) (any, error) {
+	return []any{
 		"main1",
 		"main2",
 		"main3",
@@ -81,20 +81,20 @@ func TestAlterWithCache(t *testing.T) {
 	m := NewMock()
 
 	result, err := endpoint.Chain(
-		cache.Middleware(m.First, func(req interface{}) interface{} {
+		cache.Middleware(m.First, func(req any) any {
 			return "req 1"
 		}, "key-1"),
-		cache.Middleware(m.Third, func(req interface{}) interface{} {
+		cache.Middleware(m.Third, func(req any) any {
 			return "req 1"
 		}, "key-2"),
 		loop_array.Middleware(
 			endpoint.Chain(
-				alter_with_cache.Middleware(func(data interface{}, err error) interface{} {
+				alter_with_cache.Middleware(func(data any, err error) any {
 					return "alter1"
-				}, func(original, data, cache interface{}, err error) (interface{}, error) {
+				}, func(original, data, cache any, err error) (any, error) {
 					return "alter1", nil
 				}),
-			)(m.Third), func(data interface{}) interface{} {
+			)(m.Third), func(data any, err error) any {
 				return data
 			}, nil,
 		),

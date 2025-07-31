@@ -10,9 +10,9 @@ import (
 	goRedis "github.com/redis/go-redis/v9"
 )
 
-func Middleware(key, field string, value, endstate interface{}, duration time.Duration, redis *goRedis.Client) endpoint.Middleware {
+func Middleware(key, field string, value, endstate any, duration time.Duration, redis *goRedis.Client) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			if value == nil {
 				cmd := redis.HDel(ctx, key, field)
 				if cmd.Err() != nil {

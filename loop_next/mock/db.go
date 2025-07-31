@@ -10,7 +10,7 @@ import (
 )
 
 type MockDB interface {
-	Upsert(context.Context, interface{}) (interface{}, error)
+	Upsert(context.Context, any) (any, error)
 }
 
 type mockDB struct {
@@ -30,7 +30,7 @@ func NewMockDB(db *sqlx.DB) MockDB {
 	return instanceDb
 }
 
-func (m *mockDB) Upsert(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mockDB) Upsert(ctx context.Context, request any) (any, error) {
 	var tobeInsert string
 	if request == nil {
 		return nil, nil
