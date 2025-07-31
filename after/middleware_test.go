@@ -15,20 +15,12 @@ import (
 )
 
 type Mock interface {
-<<<<<<< HEAD
 	Main(ctx context.Context, request any) (any, error)
 	First(ctx context.Context, request any) (any, error)
 	Second(ctx context.Context, request any) (any, error)
 	Third(ctx context.Context, request any) (any, error)
 	Error(ctx context.Context, request any) (any, error)
 	Insert(ctx context.Context, request any) (any, error)
-=======
-	Main(ctx context.Context, request any) (any, error)
-	First(ctx context.Context, request any) (any, error)
-	Second(ctx context.Context, request any) (any, error)
-	Third(ctx context.Context, request any) (any, error)
-	Error(ctx context.Context, request any) (any, error)
->>>>>>> main
 }
 
 var EXPECTED_RESULT string = "main endpoint"

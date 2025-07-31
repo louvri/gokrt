@@ -23,7 +23,6 @@ func Middleware(
 			original := req
 			var err error
 
-<<<<<<< HEAD
 			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
@@ -31,10 +30,6 @@ func Middleware(
 			inmem := ictx.Get(sys_key.CACHE_KEY)
 
 			if inmemCache, ok := inmem.(map[string]any); ok {
-=======
-			inmem := ctx.Value(sys_key.CACHE_KEY)
-			if inmemCache, ok := inmem.(map[string]any); ok {
->>>>>>> main
 				modified := preprocessor(original, err)
 				if modified != nil {
 					var result any

@@ -10,7 +10,6 @@ import (
 
 func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-<<<<<<< HEAD
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
 			var ok bool
@@ -21,10 +20,6 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...stri
 			ictx = ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
 			_cacheFromContext := ictx.Get(sys_key.CACHE_KEY)
 
-=======
-		return func(ctx context.Context, req any) (any, error) {
-			_cacheFromContext := ctx.Value(sys_key.CACHE_KEY)
->>>>>>> main
 			_key := ""
 			if len(key) > 0 {
 				_key = key[0]

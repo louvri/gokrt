@@ -86,7 +86,6 @@ func TestAlterWithCache(t *testing.T) {
 		cache.Middleware(m.Third, func(req any) any {
 			return "req 1"
 		}, "key-2"),
-<<<<<<< HEAD
 		alter_with_cache.Middleware(func(data any, err error) any {
 			return data
 		}, func(original, data, cache any, err error) (any, error) {
@@ -101,20 +100,6 @@ func TestAlterWithCache(t *testing.T) {
 			return injected, err
 		}),
 	)(m.Main)(context.Background(), Data{
-=======
-		loop_array.Middleware(
-			endpoint.Chain(
-				alter_with_cache.Middleware(func(data any, err error) any {
-					return "alter1"
-				}, func(original, data, cache any, err error) (any, error) {
-					return "alter1", nil
-				}),
-			)(m.Third), func(data any, err error) any {
-				return data
-			}, nil,
-		),
-	)(m.Loop)(context.Background(), Data{
->>>>>>> main
 		Request: "request",
 	})
 

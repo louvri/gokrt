@@ -13,16 +13,12 @@ import (
 
 func Middleware(key, field string, value, endstate any, duration time.Duration, redis *goRedis.Client) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-<<<<<<< HEAD
 		return func(ctx context.Context, req any) (any, error) {
 
 			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
-=======
-		return func(ctx context.Context, req any) (any, error) {
->>>>>>> main
 			if value == nil {
 				cmd := redis.HDel(ctx, key, field)
 				if cmd.Err() != nil {
