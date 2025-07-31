@@ -11,28 +11,24 @@ import (
 	"github.com/louvri/gosl"
 )
 
-func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interface{}, postprocessor func(original, data interface{}, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
+func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any, postprocessor func(original, data any, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
-			errorCollection := make([]map[string]interface{}, 0)
+		return func(ctx context.Context, req any) (any, error) {
+			errorCollection := make([]map[string]any, 0)
 
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
 			}
-			/*var kit gosl.Kit
-			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				kit = gosl.New(ctx)
-			}*/
 			ori, err := next(ctx, req)
 			if err != nil {
 				return nil, err
 			} else if ori != nil {
-				run := func(data interface{}, index int) (interface{}, error) {
-					inner := func(index int) (interface{}, error) {
-						var req interface{}
+				run := func(data any, index int) (any, error) {
+					inner := func(index int) (any, error) {
+						var req any
 						if preprocessor != nil {
-							req = preprocessor(data)
+							req = preprocessor(data, err)
 						} else {
 							req = data
 						}
@@ -41,7 +37,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 								return nil, err
 							} else {
-								errorCollection = append(errorCollection, map[string]interface{}{
+								errorCollection = append(errorCollection, map[string]any{
 									"lineNumber": index,
 									"error":      err.Error(),
 								})
@@ -52,57 +48,98 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data interface{}) interfa
 						}
 						return resp, nil
 					}
+					return inner(index)
+				}
+
+				handler := func(data any) error {
+					if tobeHandle, ok := data.([]map[string]any); ok {
+						for index, item := range tobeHandle {
+							_, err := run(item, index)
+							if err != nil {
+								return err
+							}
+						}
+					} else if tobeHandle, ok := data.([]any); ok {
+						for index, item := range tobeHandle {
+							_, err := run(item, index)
+							if err != nil {
+								return err
+							}
+						}
+					}
+					return nil
+				}
+
+				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
+					ctx, kit := gosl.New(ctx)
 					if opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] {
-						var response interface{}
 						var err error
 						var wg sync.WaitGroup
 						wg.Add(1)
-						go func() {
+						go func() error {
 							defer wg.Done()
-							response, err = inner(index)
-						}()
-						wg.Wait()
-						return response, err
-					}
-					return inner(index)
-				}
-				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					ctx, kit := gosl.New(ctx)
-					if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
-						if arr, ok := ori.([]map[string]interface{}); ok {
-							for index, item := range arr {
-								_, err := run(item, index)
+							if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+								err = handler(ori)
 								if err != nil {
 									return err
 								}
+								return nil
+							}); err != nil {
+								return err
 							}
 							return nil
-						} else if arr, ok := ori.([]interface{}); ok {
-							for index, item := range arr {
-								_, err := run(item, index)
+						}()
+						wg.Wait()
+						if err != nil {
+							return nil, err
+						}
+					} else {
+						var err error
+						go func() error {
+							if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+								err = handler(ori)
 								if err != nil {
 									return err
 								}
+								return nil
+							}); err != nil {
+								return err
 							}
+							return nil
+						}()
+						if err != nil {
+							return nil, err
 						}
-						return nil
-					}); err != nil {
-						return nil, err
 					}
+
 				} else {
-					if arr, ok := ori.([]map[string]interface{}); ok {
-						for index, item := range arr {
-							_, err := run(item, index)
+					if opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] {
+						var err error
+						var wg sync.WaitGroup
+						wg.Add(1)
+						go func() error {
+							defer wg.Done()
+							err = handler(ori)
 							if err != nil {
-								return nil, err
+								return err
 							}
+							return nil
+						}()
+						wg.Wait()
+						if err != nil {
+							return nil, err
 						}
-					} else if arr, ok := ori.([]interface{}); ok {
-						for index, item := range arr {
-							_, err := run(item, index)
+					} else {
+						var err error
+						go func() error {
+							err = handler(ori)
 							if err != nil {
-								return nil, err
+								return err
 							}
+							return nil
+						}()
+						if err != nil {
+							return nil, err
 						}
 					}
 				}

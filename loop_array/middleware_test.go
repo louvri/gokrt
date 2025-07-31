@@ -87,11 +87,11 @@ func TestLoopArrayWithError(t *testing.T) {
 	m := NewMock(nil)
 	_, r := endpoint.Chain(
 		loop_array.Middleware(
-			m.Executor, func(data interface{}) interface{} {
+			m.Executor, func(data interface{}, err error) interface{} {
 				return data
 			}, func(original, data interface{}, err error) {
 				// no op
-			},
+			}, option.RUN_ASYNC_WAIT,
 		),
 	)(m.Main)(context.Background(), "execute")
 	if r != nil {
@@ -111,12 +111,12 @@ func TestLoopArrayWithErrorAndIgnore(t *testing.T) {
 	m := NewMock(nil)
 	_, r := endpoint.Chain(
 		loop_array.Middleware(
-			m.Executor, func(data interface{}) interface{} {
+			m.Executor, func(data interface{}, err error) interface{} {
 				return data
 			}, func(original, data interface{}, err error) {
 				// no op
 			},
-			option.RUN_WITH_ERROR,
+			option.RUN_WITH_ERROR, option.RUN_ASYNC_WAIT,
 		),
 	)(m.Main)(context.Background(), "execute")
 	if r != nil {
@@ -152,11 +152,11 @@ func TestLoopRunInTransaction(t *testing.T) {
 
 	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
 	_, err = endpoint.Chain(
-		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
+		loop_array.Middleware(m.Insert, func(data interface{}, err error) interface{} {
 			return data
 		}, func(original, data interface{}, err error) {
 			// no op
-		}, option.RUN_IN_TRANSACTION),
+		}, option.RUN_IN_TRANSACTION, option.RUN_ASYNC_WAIT),
 	)(func(context.Context, interface{}) (interface{}, error) {
 		return []interface{}{
 			"1stIndex",
@@ -190,11 +190,11 @@ func TestLoopRunInTransactionWithError(t *testing.T) {
 
 	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
 	_, err = endpoint.Chain(
-		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
+		loop_array.Middleware(m.Insert, func(data interface{}, err error) interface{} {
 			return data
 		}, func(original, data interface{}, err error) {
 
-		}, option.RUN_IN_TRANSACTION),
+		}, option.RUN_IN_TRANSACTION, option.RUN_ASYNC_WAIT),
 	)(func(context.Context, interface{}) (interface{}, error) {
 		return []interface{}{
 			"1stIndex",
@@ -229,7 +229,7 @@ func TestLoopRunWithError(t *testing.T) {
 
 	ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(db))
 	_, err = endpoint.Chain(
-		loop_array.Middleware(m.Insert, func(data interface{}) interface{} {
+		loop_array.Middleware(m.Insert, func(data interface{}, err error) interface{} {
 			return data
 		}, func(original, data interface{}, err error) {
 			// no op

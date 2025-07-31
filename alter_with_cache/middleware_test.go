@@ -94,7 +94,7 @@ func TestAlterWithCache(t *testing.T) {
 				}, func(original, data, cache interface{}, err error) (interface{}, error) {
 					return "alter1", nil
 				}),
-			)(m.Third), func(data interface{}) interface{} {
+			)(m.Third), func(data interface{}, err error) interface{} {
 				return data
 			}, nil,
 		),
