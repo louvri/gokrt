@@ -9,10 +9,10 @@ import (
 
 func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil {
-				next = func(ctx context.Context, req interface{}) (interface{}, error) {
+				next = func(ctx context.Context, req any) (any, error) {
 					return "", nil
 				}
 				for i := len(middlewares) - 1; i >= 0; i-- { // reverse

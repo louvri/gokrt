@@ -90,7 +90,7 @@ func (f *File) Close() {
 		}
 	}
 }
-func (f *File) Handler() interface{} {
+func (f *File) Handler() any {
 	return f.client
 }
 func (f *File) Reader() io.Reader {

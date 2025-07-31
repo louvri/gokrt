@@ -10,10 +10,10 @@ import (
 
 func Middleware() endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof == "eof" {
-				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); ok {
+				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					for _, fileObject := range fileObjects {
 						if con, ok := fileObject.(connection.Connection); ok && con.Driver() == "gcs" {
 							con.Close()

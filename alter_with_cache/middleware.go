@@ -10,11 +10,11 @@ import (
 )
 
 func Middleware(
-	preprocessor func(data interface{}, err error) interface{},
-	postprocessor func(original, data, cache interface{}, err error) (interface{}, error),
+	preprocessor func(data any, err error) any,
+	postprocessor func(original, data, cache any, err error) (any, error),
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
@@ -23,10 +23,10 @@ func Middleware(
 			var err error
 
 			inmem := ctx.Value(sys_key.CACHE_KEY)
-			if inmemCache, ok := inmem.(map[string]interface{}); ok {
+			if inmemCache, ok := inmem.(map[string]any); ok {
 				modified := preprocessor(original, err)
 				if modified != nil {
-					var result interface{}
+					var result any
 					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
 						var wg sync.WaitGroup
 						wg.Add(1)

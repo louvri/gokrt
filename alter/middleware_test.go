@@ -13,11 +13,11 @@ import (
 )
 
 type Mock interface {
-	Main(ctx context.Context, request interface{}) (interface{}, error)
-	First(ctx context.Context, request interface{}) (interface{}, error)
-	Second(ctx context.Context, request interface{}) (interface{}, error)
-	Third(ctx context.Context, request interface{}) (interface{}, error)
-	Error(ctx context.Context, request interface{}) (interface{}, error)
+	Main(ctx context.Context, request any) (any, error)
+	First(ctx context.Context, request any) (any, error)
+	Second(ctx context.Context, request any) (any, error)
+	Third(ctx context.Context, request any) (any, error)
+	Error(ctx context.Context, request any) (any, error)
 }
 type mock struct {
 	logger *log.Logger
@@ -29,43 +29,43 @@ func NewMock() Mock {
 	}
 }
 
-func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Main(ctx context.Context, request any) (any, error) {
 	return "main endpoint", nil
 }
 
-func (m *mock) First(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) First(ctx context.Context, request any) (any, error) {
 	return "first endpoint", nil
 }
-func (m *mock) Second(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Second(ctx context.Context, request any) (any, error) {
 	return "second endpoint", nil
 }
-func (m *mock) Third(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Third(ctx context.Context, request any) (any, error) {
 	return "third endpoint", nil
 }
-func (m *mock) Error(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Error(ctx context.Context, request any) (any, error) {
 	return nil, errors.New("it's error")
 }
 func TestHappyCaseAlter(t *testing.T) {
 	m := NewMock()
 	resp, _ := endpoint.Chain(
-		alter.Middleware(m.First, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.First, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
-		alter.Middleware(m.Second, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Second, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
-		alter.Middleware(m.Third, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Third, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
@@ -82,31 +82,31 @@ func TestNotStopWithError(t *testing.T) {
 	m := NewMock()
 
 	resp, err := endpoint.Chain(
-		alter.Middleware(m.First, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.First, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
-		alter.Middleware(m.Second, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Second, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
-		alter.Middleware(m.Third, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Third, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
-		alter.Middleware(m.Error, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Error, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}, RUN_WITH_OPTION.RUN_WITH_ERROR),
@@ -127,30 +127,30 @@ func TestStopWithError(t *testing.T) {
 	m := NewMock()
 
 	resp, err := endpoint.Chain(
-		alter.Middleware(m.First, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.First, func(data any, err error) any {
 			if err != nil {
 				return err
 			}
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			return data, err
 		}),
 
-		alter.Middleware(m.Error, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Error, func(data any, err error) any {
 			if err != nil {
 				return err
 			}
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			return data, err
 		}),
 
-		alter.Middleware(m.Third, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Third, func(data any, err error) any {
 			if err != nil {
 				return err
 			}
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			return data, err
 		}),
 	)(m.Main)(context.Background(), "")
@@ -163,24 +163,24 @@ func TestStopWithError(t *testing.T) {
 func TestBeforeRun(t *testing.T) {
 	m := NewMock()
 	resp, _ := endpoint.Chain(
-		alter.Middleware(m.First, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.First, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(original)
 			return original, nil
 		}, RUN_WITH_OPTION.EXECUTE_BEFORE),
-		alter.Middleware(m.Second, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Second, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
-		alter.Middleware(m.Third, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Third, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),
@@ -196,13 +196,13 @@ func TestBeforeRun(t *testing.T) {
 func TestAlterAfter(t *testing.T) {
 	m := NewMock()
 	_, err := endpoint.Chain(
-		after.Middleware(m.First, func(data interface{}, err error) interface{} {
+		after.Middleware(m.First, func(data any, err error) any {
 			return data
 		}, nil),
-		alter.Middleware(m.Main, func(data interface{}, err error) interface{} {
+		alter.Middleware(m.Main, func(data any, err error) any {
 			t.Log(data)
 			return data
-		}, func(original, data interface{}, err error) (interface{}, error) {
+		}, func(original, data any, err error) (any, error) {
 			t.Log(data)
 			return data, nil
 		}),

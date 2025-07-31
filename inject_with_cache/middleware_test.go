@@ -13,11 +13,11 @@ import (
 )
 
 type Mock interface {
-	Main(ctx context.Context, request interface{}) (interface{}, error)
-	First(ctx context.Context, request interface{}) (interface{}, error)
-	Alter(ctx context.Context, request interface{}) (interface{}, error)
-	Third(ctx context.Context, request interface{}) (interface{}, error)
-	Error(ctx context.Context, request interface{}) (interface{}, error)
+	Main(ctx context.Context, request any) (any, error)
+	First(ctx context.Context, request any) (any, error)
+	Alter(ctx context.Context, request any) (any, error)
+	Third(ctx context.Context, request any) (any, error)
+	Error(ctx context.Context, request any) (any, error)
 }
 type mock struct {
 	logger *log.Logger
@@ -29,34 +29,34 @@ func NewMock() Mock {
 	}
 }
 
-func (m *mock) Main(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Main(ctx context.Context, request any) (any, error) {
 	return request, nil
 }
 
-func (m *mock) First(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) First(ctx context.Context, request any) (any, error) {
 	return "first inject endpoint", nil
 }
-func (m *mock) Alter(ctx context.Context, request interface{}) (interface{}, error) {
-	if result, ok := request.(map[string]interface{}); ok {
+func (m *mock) Alter(ctx context.Context, request any) (any, error) {
+	if result, ok := request.(map[string]any); ok {
 		result["status"] = "injected"
 		return result, nil
 	}
 	return "alter inject endpoint", nil
 }
-func (m *mock) Third(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Third(ctx context.Context, request any) (any, error) {
 	return "third inject endpoint", nil
 }
-func (m *mock) Error(ctx context.Context, request interface{}) (interface{}, error) {
+func (m *mock) Error(ctx context.Context, request any) (any, error) {
 	return nil, errors.New("it's error")
 }
 
 func TestAlterCache(t *testing.T) {
 	m := NewMock()
 	resp, err := endpoint.Chain(
-		cache.Middleware(m.First, func(req interface{}) interface{} {
+		cache.Middleware(m.First, func(req any) any {
 			return nil
 		}),
-		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
+		inject_with_cache.Middleware(func(cache, data any) any {
 			if data == nil {
 				return cache.(string)
 			}
@@ -68,7 +68,7 @@ func TestAlterCache(t *testing.T) {
 		t.FailNow()
 	}
 
-	if result, ok := resp.(map[string]interface{}); ok && result != nil {
+	if result, ok := resp.(map[string]any); ok && result != nil {
 		if result["data"] == nil {
 			t.Log("data field in result shouldn't be null")
 			t.FailNow()
@@ -88,16 +88,16 @@ func TestAlterCache(t *testing.T) {
 
 func TestAlterMultipleCache(t *testing.T) {
 	m := NewMock()
-	var tobeProcessed map[string]interface{}
+	var tobeProcessed map[string]any
 	_, err := endpoint.Chain(
-		cache.Middleware(m.First, func(req interface{}) interface{} {
+		cache.Middleware(m.First, func(req any) any {
 			return nil
 		}, "cache-1"),
-		cache.Middleware(m.Third, func(req interface{}) interface{} {
+		cache.Middleware(m.Third, func(req any) any {
 			return nil
 		}, "cache-2"),
-		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
-			tobeProcessed = cache.(map[string]interface{})
+		inject_with_cache.Middleware(func(cache, data any) any {
+			tobeProcessed = cache.(map[string]any)
 			return tobeProcessed
 		}),
 	)(m.Main)(context.Background(), "request")
@@ -114,12 +114,12 @@ func TestAlterMultipleCache(t *testing.T) {
 
 func TestNilPreprocessor(t *testing.T) {
 	m := NewMock()
-	var tobeProcessed map[string]interface{}
+	var tobeProcessed map[string]any
 	_, err := endpoint.Chain(
 		cache.Middleware(m.First, nil, "cache-1"),
 		cache.Middleware(m.Third, nil, "cache-2"),
-		inject_with_cache.Middleware(func(cache, data interface{}) interface{} {
-			tobeProcessed = cache.(map[string]interface{})
+		inject_with_cache.Middleware(func(cache, data any) any {
+			tobeProcessed = cache.(map[string]any)
 			return tobeProcessed
 		}),
 	)(m.Main)(context.Background(), "request")

@@ -10,7 +10,7 @@ import (
 
 func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		return func(ctx context.Context, req interface{}) (interface{}, error) {
+		return func(ctx context.Context, req any) (any, error) {
 			eof := ctx.Value(sys_key.EOF)
 			if eof != nil && eof == "eof" {
 				return next(ctx, req)
@@ -24,9 +24,9 @@ func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Mid
 					return nil, err
 				}
 				var ok bool
-				var file map[string]interface{}
-				if file, ok = ctx.Value(sys_key.FILE_KEY).(map[string]interface{}); !ok {
-					file = make(map[string]interface{})
+				var file map[string]any
+				if file, ok = ctx.Value(sys_key.FILE_KEY).(map[string]any); !ok {
+					file = make(map[string]any)
 				}
 				switch kind {
 				case gcs.READER:
@@ -36,9 +36,9 @@ func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Mid
 					file[name] = con.Writer()
 					ctx = context.WithValue(ctx, sys_key.FILE_KEY, file)
 				}
-				var fileObject map[string]interface{}
-				if fileObject, ok = ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]interface{}); !ok {
-					fileObject = make(map[string]interface{})
+				var fileObject map[string]any
+				if fileObject, ok = ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); !ok {
+					fileObject = make(map[string]any)
 				}
 				fileObject[name] = con
 				ctx = context.WithValue(ctx, sys_key.FILE_OBJECT_KEY, fileObject)
