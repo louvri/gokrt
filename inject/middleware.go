@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	"github.com/louvri/gokrt/option"
+	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(
@@ -22,7 +24,9 @@ func Middleware(
 					config[opt] = true
 				}
 			}
-
+			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
 			response, err = e(ctx, req)
 			if err != nil && config[option.RUN_WITH_ERROR] {
 				return nil, err
