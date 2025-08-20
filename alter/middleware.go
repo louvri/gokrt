@@ -28,7 +28,10 @@ func Middleware(
 			}
 
 			if original != nil {
-				result := preprocessor(original, err)
+				result := original
+				if preprocessor != nil {
+					result = preprocessor(original, err)
+				}
 				if result != nil {
 					var altered any
 					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
@@ -39,9 +42,15 @@ func Middleware(
 							altered, err = e(ctx, req)
 						}()
 						wg.Wait()
+						if postprocessor == nil {
+							return altered, err
+						}
 						return postprocessor(original, altered, err)
 					} else {
 						altered, err = e(ctx, result)
+						if postprocessor == nil {
+							return altered, err
+						}
 						return postprocessor(original, altered, err)
 					}
 
