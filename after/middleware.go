@@ -23,7 +23,10 @@ func Middleware(
 			resp, err := next(ctx, req)
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
 			if runOnError || err == nil {
-				result := preprocessor(resp, err)
+				result := resp
+				if preprocessor != nil {
+					result = preprocessor(resp, err)
+				}
 				if result != nil {
 					if _, ok := ctx.(*icontext.CopyContext); !ok {
 						ctx = icontext.New(ctx)

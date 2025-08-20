@@ -24,7 +24,10 @@ func Middleware(
 
 			inmem := ctx.Value(sys_key.CACHE_KEY)
 			if inmemCache, ok := inmem.(map[string]any); ok {
-				modified := preprocessor(original, err)
+				modified := original
+				if preprocessor != nil {
+					modified = preprocessor(original, err)
+				}
 				if modified != nil {
 					var result any
 					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
