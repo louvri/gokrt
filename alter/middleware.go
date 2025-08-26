@@ -39,7 +39,7 @@ func Middleware(
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							altered, err = e(ctx, req)
+							altered, err = e(ctx, result)
 						}()
 						wg.Wait()
 						if postprocessor == nil {
