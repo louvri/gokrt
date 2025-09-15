@@ -14,7 +14,9 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer en
 		for i := len(others) - 1; i >= 0; i-- { // reverse
 			next = others[i](next)
 		}
-		bg := hantu.Singleton(hantu.Option{})
+		bg := hantu.Singleton(hantu.Option{
+			Max: 50,
+		})
 		return func(ctx context.Context, request any) (any, error) {
 			response, err := next(ctx, request)
 			if err != nil {
@@ -43,7 +45,6 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer en
 								Delay:   waitTime,
 							})
 						}
-
 					}
 				})
 			}
