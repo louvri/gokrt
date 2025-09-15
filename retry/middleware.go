@@ -36,7 +36,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer en
 					if !ok {
 						return
 					}
-					_, err := outer(next)(ctx, converted["request"])
+					_, err := next(ctx, converted["request"])
 					if err != nil {
 						if cnt, ok := converted["counter"].(int); ok && cnt < numberOfRetries {
 							converted["counter"] = cnt + 1
