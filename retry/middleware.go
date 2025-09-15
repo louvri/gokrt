@@ -23,8 +23,10 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer en
 				injectedReq := make(map[string]any)
 				injectedReq["request"] = request
 				injectedReq["counter"] = 0
+				timestamp := time.Now().Format("2006-01-02 15:04:05")
 				bg.Queue(schema.Job{
-					Id:      id,
+					Id:      timestamp,
+					Name:    id,
 					Ctx:     ctx,
 					Request: injectedReq,
 					Delay:   waitTime,
@@ -39,7 +41,8 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer en
 						if cnt, ok := converted["counter"].(int); ok && cnt < numberOfRetries {
 							converted["counter"] = cnt + 1
 							bg.Queue(schema.Job{
-								Id:      id,
+								Id:      timestamp,
+								Name:    id,
 								Ctx:     ctx,
 								Request: converted,
 								Delay:   waitTime,
