@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/storage v1.39.0
 	github.com/go-kit/kit v0.13.0
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/johnjerrico/hantu v1.0.5
 	github.com/louvri/gosl v1.2.0
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/stretchr/testify v1.8.4
@@ -30,6 +31,10 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.1 // indirect
+	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-memdb v1.3.3 // indirect
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/korovkin/limiter v0.0.0-20230101005513-bfac7ca56b5a // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
