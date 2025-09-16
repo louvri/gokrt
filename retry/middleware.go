@@ -9,10 +9,12 @@ import (
 	"github.com/johnjerrico/hantu/schema"
 )
 
-func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer endpoint.Middleware, others ...endpoint.Middleware) endpoint.Middleware {
+func Middleware(id string, numberOfRetries int, waitTime time.Duration, middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		for i := len(others) - 1; i >= 0; i-- { // reverse
-			next = others[i](next)
+		n := len(middlewares) - 1
+		n_minus_one := n - 1
+		for i := n; i >= 0; i-- { // reverse
+			next = middlewares[i](next)
 		}
 		bg := hantu.Singleton(hantu.Option{
 			Max: 50,
@@ -31,12 +33,18 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, outer en
 					Request: injectedReq,
 					Delay:   waitTime,
 				})
+				retry := middlewares[n](func(ctx context.Context, request any) (any, error) {
+					return response, err
+				})
+				for i := n_minus_one; i >= 0; i-- {
+					retry = middlewares[i](retry)
+				}
 				bg.Worker().Register(id, func(ctx context.Context, request any) {
 					converted, ok := request.(map[string]any)
 					if !ok {
 						return
 					}
-					_, err := next(ctx, converted["request"])
+					_, err := retry(ctx, converted["request"])
 					if err != nil {
 						if cnt, ok := converted["counter"].(int); ok && cnt < numberOfRetries {
 							converted["counter"] = cnt + 1
