@@ -9,7 +9,7 @@ import (
 	"github.com/johnjerrico/hantu/schema"
 )
 
-func Middleware(id string, numberOfRetries int, waitTime time.Duration, middlewares ...endpoint.Middleware) endpoint.Middleware {
+func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorMessage string, middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		n := len(middlewares) - 1
 		n_minus_one := n - 1
@@ -20,8 +20,8 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, middlewa
 			Max: 50,
 		})
 		return func(ctx context.Context, request any) (any, error) {
-			response, err := next(ctx, request)
-			if err != nil {
+			response, ierr := next(ctx, request)
+			if ierr != nil && ierr.Error() == onErrorMessage {
 				injectedReq := make(map[string]any)
 				injectedReq["request"] = request
 				injectedReq["counter"] = 0
@@ -34,7 +34,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, middlewa
 					Delay:   waitTime,
 				})
 				retry := middlewares[n](func(ctx context.Context, request any) (any, error) {
-					return response, err
+					return response, ierr
 				})
 				for i := n_minus_one; i >= 0; i-- {
 					retry = middlewares[i](retry)
@@ -59,7 +59,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, middlewa
 					}
 				})
 			}
-			return response, err
+			return response, ierr
 		}
 	}
 }
