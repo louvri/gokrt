@@ -5,7 +5,9 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
+	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(
@@ -22,6 +24,9 @@ func Middleware(
 			var original any
 			var err error
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
 			original, err = next(ctx, req)
 			if err != nil && !runOnError {
 				return original, err

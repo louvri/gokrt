@@ -5,7 +5,8 @@ import (
 	"sync"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/louvri/gokrt/icontext"
+	icontext "github.com/louvri/gokrt/context"
+	"github.com/louvri/gokrt/sys_key"
 	goRedis "github.com/redis/go-redis/v9"
 )
 
@@ -16,6 +17,9 @@ func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.
 			curr := cmd.Val()
 			if cmd.Err() != nil {
 				return nil, cmd.Err()
+			}
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
 			}
 			resp, err := next(ctx, req)
 			if curr == value {
@@ -32,9 +36,6 @@ func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.
 							}()
 							wg.Wait()
 						} else {
-							if _, ok := ctx.(*icontext.CopyContext); !ok {
-								ctx = icontext.New(ctx)
-							}
 							go e(ctx, result)
 						}
 					}

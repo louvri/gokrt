@@ -4,13 +4,18 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(preprocessor func(cache, data any) any, keys ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			inmem := ctx.Value(sys_key.CACHE_KEY)
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
+			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+			inmem := ictx.Get(sys_key.CACHE_KEY)
 			if inmemCache, ok := inmem.(map[string]any); ok {
 				key := ""
 				nKey := len(keys)

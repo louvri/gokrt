@@ -53,7 +53,7 @@ func (m *mockDB) Upsert(ctx context.Context, request any) (any, error) {
 		}
 	}
 	fmt.Printf("tobe inserted on upsert: %s \n", tobeInsert)
-	query := fmt.Sprintf("INSERT INTO trx_table(`values`) VALUES('%s')", tobeInsert)
+	query := fmt.Sprintf("INSERT INTO hello_1(`data`) VALUES('%s')", tobeInsert)
 	res, err := queryable.ExecContext(ctx, query)
 	if err != nil {
 		return nil, err
