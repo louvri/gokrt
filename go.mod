@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/storage v1.39.0
 	github.com/go-kit/kit v0.13.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/johnjerrico/hantu v1.0.5
+	github.com/johnjerrico/hantu v1.0.6
 	github.com/louvri/gosl v1.2.0
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/stretchr/testify v1.8.4
