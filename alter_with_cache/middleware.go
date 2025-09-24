@@ -23,10 +23,10 @@ func Middleware(
 			original := req
 			var err error
 
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
-			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
+			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			inmem := ictx.Get(sys_key.CACHE_KEY)
 
 			if inmemCache, ok := inmem.(map[string]any); ok {

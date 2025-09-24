@@ -22,7 +22,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any,
 			for _, option := range opts {
 				opt[option] = true
 			}
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			ori, err := next(ctx, req)

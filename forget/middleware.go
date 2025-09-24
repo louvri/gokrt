@@ -16,7 +16,7 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	var c cache
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			outer := func(ctx context.Context, req any) (any, error) {

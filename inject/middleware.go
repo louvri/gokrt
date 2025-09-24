@@ -24,7 +24,7 @@ func Middleware(
 					config[opt] = true
 				}
 			}
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			response, err = e(ctx, req)

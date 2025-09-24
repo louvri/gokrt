@@ -13,11 +13,11 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...stri
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
 			var ok bool
-			if _, ok = ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 
-			ictx = ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
+			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			_cacheFromContext := ictx.Get(sys_key.CACHE_KEY)
 
 			_key := ""

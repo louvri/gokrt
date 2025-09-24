@@ -13,29 +13,29 @@ type Context struct {
 }
 
 func New(ctx context.Context) context.Context {
-	if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*Context); ok {
+	if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*Context); ok {
 		return ctx
 	}
 	base := Hijack(ctx)
-	ctx = context.WithValue(ctx, sys_key.INTERNAL_CONTEXT, base)
+	ctx = context.WithValue(ctx, sys_key.GOKRT_CONTEXT, base)
 	return ctx
 }
 
 func Hijack(ctx context.Context) *Context {
 	var base *Context
-	if tmp, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*Context); ok {
+	if tmp, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*Context); ok {
 		base = tmp
 	} else {
 		base = &Context{
 			base: ctx,
 			properties: map[sys_key.SysKey]any{
-				sys_key.FILE_KEY:         ctx.Value(sys_key.FILE_KEY),
-				sys_key.FILE_OBJECT_KEY:  ctx.Value(sys_key.FILE_OBJECT_KEY),
-				sys_key.SOF:              ctx.Value(sys_key.SOF),
-				sys_key.EOF:              ctx.Value(sys_key.EOF),
-				sys_key.DATA_REF:         ctx.Value(sys_key.DATA_REF),
-				sys_key.CACHE_KEY:        ctx.Value(sys_key.CACHE_KEY),
-				sys_key.INTERNAL_CONTEXT: ctx.Value(sys_key.INTERNAL_CONTEXT),
+				sys_key.FILE_KEY:        ctx.Value(sys_key.FILE_KEY),
+				sys_key.FILE_OBJECT_KEY: ctx.Value(sys_key.FILE_OBJECT_KEY),
+				sys_key.SOF:             ctx.Value(sys_key.SOF),
+				sys_key.EOF:             ctx.Value(sys_key.EOF),
+				sys_key.DATA_REF:        ctx.Value(sys_key.DATA_REF),
+				sys_key.CACHE_KEY:       ctx.Value(sys_key.CACHE_KEY),
+				sys_key.GOKRT_CONTEXT:   ctx.Value(sys_key.GOKRT_CONTEXT),
 			},
 		}
 	}
@@ -60,8 +60,8 @@ func (c *Context) Get(key sys_key.SysKey) any {
 		return c.properties[sys_key.DATA_REF]
 	case sys_key.CACHE_KEY:
 		return c.properties[sys_key.CACHE_KEY]
-	case sys_key.INTERNAL_CONTEXT:
-		return c.properties[sys_key.INTERNAL_CONTEXT]
+	case sys_key.GOKRT_CONTEXT:
+		return c.properties[sys_key.GOKRT_CONTEXT]
 	default:
 		return c.base.Value(key)
 	}
@@ -81,8 +81,8 @@ func (c *Context) Set(key, value any) {
 		c.properties[sys_key.DATA_REF] = value
 	case sys_key.CACHE_KEY:
 		c.properties[sys_key.CACHE_KEY] = value
-	case sys_key.INTERNAL_CONTEXT:
-		c.properties[sys_key.INTERNAL_CONTEXT] = value
+	case sys_key.GOKRT_CONTEXT:
+		c.properties[sys_key.GOKRT_CONTEXT] = value
 	default:
 		ctx := c.base
 		ctx = context.WithValue(ctx, key, value)

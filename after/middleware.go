@@ -21,7 +21,7 @@ func Middleware(
 			for _, option := range opts {
 				opt[option] = true
 			}
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			resp, err := next(ctx, req)

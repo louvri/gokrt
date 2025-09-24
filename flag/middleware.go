@@ -15,10 +15,10 @@ func Middleware(key, field string, value, endstate any, duration time.Duration, 
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
-			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
+			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			if value == nil {
 				cmd := redis.HDel(ctx, key, field)
 				if cmd.Err() != nil {

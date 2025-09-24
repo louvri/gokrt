@@ -24,7 +24,7 @@ func Middleware(
 			var original any
 			var err error
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
 			original, err = next(ctx, req)

@@ -39,10 +39,10 @@ func Middleware(
 			curr = make([]map[string]any, 0)
 			errorCollection := make([]map[string]any, 0)
 
-			if _, ok := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context); !ok {
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
 				ctx = icontext.New(ctx)
 			}
-			ictx, _ := ctx.Value(sys_key.INTERNAL_CONTEXT).(*icontext.Context)
+			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 
 			run := func(iteration int, ctx context.Context) (any, error) {
 				inner := func(iteration int) (any, error) {
