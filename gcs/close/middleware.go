@@ -20,7 +20,7 @@ func Middleware() endpoint.Middleware {
 
 			eof := ictx.Get(sys_key.EOF)
 			if eof != nil && eof == "eof" {
-				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
+				if fileObjects, ok := ictx.Get(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					for _, fileObject := range fileObjects {
 						if con, ok := fileObject.(connection.Connection); ok && con.Driver() == "gcs" {
 							con.Close()
