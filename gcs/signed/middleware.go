@@ -7,15 +7,21 @@ import (
 	"cloud.google.com/go/storage"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/louvri/gokrt/connection"
+	icontext "github.com/louvri/gokrt/context"
 	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(bucket string, expiry time.Duration) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			eof := ctx.Value(sys_key.EOF)
+			var ictx *icontext.Context
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
+			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+			eof := ictx.Get(sys_key.EOF)
 			if eof != nil && eof != "" {
-				if fileObjects, ok := ctx.Value(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
+				if fileObjects, ok := ictx.Get(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					opts := &storage.SignedURLOptions{
 						Scheme:  storage.SigningSchemeV4,
 						Method:  "GET",

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
 	"github.com/louvri/gokrt/sys_key"
 )
 
@@ -21,7 +22,14 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 				splitter = splitterSym[0]
 			}
 			var reader io.Reader
-			if tmp, ok := ctx.Value(sys_key.FILE_KEY).(map[string]any); tmp != nil && ok {
+			var ictx *icontext.Context
+
+			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ctx = icontext.New(ctx)
+			}
+			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+
+			if tmp, ok := ictx.Get(sys_key.FILE_KEY).(map[string]any); tmp != nil && ok {
 				reader = tmp[filename].(io.Reader)
 			} else {
 				return nil, nil
@@ -59,7 +67,8 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 				if first {
 					columns = strings.Split(text, splitter)
 					first = false
-					ctx = context.WithValue(ctx, sys_key.SOF, true)
+					// ctx = context.WithValue(ctx, sys_key.SOF, true)
+					ictx.Set(sys_key.SOF, true)
 				} else {
 					values := strings.Split(text, splitter)
 					//check values
@@ -80,7 +89,8 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 							nextErr = append(nextErr, err)
 						}
 					}
-					ctx = context.WithValue(ctx, sys_key.SOF, false)
+					// ctx = context.WithValue(ctx, sys_key.SOF, false)
+					ictx.Set(sys_key.SOF, false)
 				}
 				lineNumber++
 				time.Sleep(0)
@@ -98,7 +108,8 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 			if err := scanner.Err(); err != nil && !ignoreError {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			}
-			ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+			// ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+			ictx.Set(sys_key.EOF, "eof")
 			if tmp, err := next(ctx, nil); err != nil {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			} else if tmp != nil {
