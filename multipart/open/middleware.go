@@ -34,7 +34,8 @@ func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 					return nil, err
 				}
 				file[con.Name()] = con.Reader()
-				ctx = context.WithValue(ctx, sys_key.FILE_KEY, file)
+				// ctx = context.WithValue(ctx, sys_key.FILE_KEY, file)
+				ictx.Set(sys_key.FILE_KEY, file)
 
 				var fileObject map[string]any
 				if fileObject, ok = ictx.Get(sys_key.FILE_OBJECT_KEY).(map[string]any); !ok {

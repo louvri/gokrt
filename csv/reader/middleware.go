@@ -108,7 +108,8 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 			if err := scanner.Err(); err != nil && !ignoreError {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			}
-			ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+			// ctx = context.WithValue(ctx, sys_key.EOF, "eof")
+			ictx.Set(sys_key.EOF, "eof")
 			if tmp, err := next(ctx, nil); err != nil {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			} else if tmp != nil {
