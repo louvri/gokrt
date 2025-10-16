@@ -9,7 +9,7 @@ import (
 	"github.com/johnjerrico/hantu/schema"
 )
 
-func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorMessage string, middlewares ...endpoint.Middleware) endpoint.Middleware {
+func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorMessage string, callback func(id string, request any, timestamp string), middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		n := len(middlewares) - 1
 		n_minus_one := n - 1
@@ -43,6 +43,9 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 					converted, ok := request.(map[string]any)
 					if !ok {
 						return
+					}
+					if callback != nil {
+						callback(id, converted, timestamp)
 					}
 					_, err := retry(ctx, converted["request"])
 					if err != nil {
