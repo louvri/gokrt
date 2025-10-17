@@ -22,14 +22,12 @@ func Middleware(filename string, columns []string, cancelOnError bool, splitter 
 				r := []rune(splitter[0])
 				splitterRune = r[0]
 			}
+			var ok bool
 			var ictx *icontext.Context
-
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
-
-			response, responseError := next(ctx, req)
+			response, responseError := next(ictx, req)
 			if responseError != nil && cancelOnError {
 				if tmp, ok := ictx.Get(sys_key.FILE_OBJECT_KEY).(map[string]any); ok {
 					if con, ok := tmp[filename].(connection.Connection); ok {

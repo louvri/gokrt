@@ -67,7 +67,6 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 				if first {
 					columns = strings.Split(text, splitter)
 					first = false
-					// ctx = context.WithValue(ctx, sys_key.SOF, true)
 					ictx.Set(sys_key.SOF, true)
 				} else {
 					values := strings.Split(text, splitter)
@@ -82,20 +81,19 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 							data[column] = values[i]
 						}
 						data["lineNumber"] = lineNumber
-						response, err = exec(ctx, data)
+						response, err = exec(ictx, data)
 						if err != nil && !ignoreError {
 							return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 						} else if err != nil {
 							nextErr = append(nextErr, err)
 						}
 					}
-					// ctx = context.WithValue(ctx, sys_key.SOF, false)
 					ictx.Set(sys_key.SOF, false)
 				}
 				lineNumber++
 				time.Sleep(0)
 			}
-			if tmp, err := exec(ctx, nil); err != nil && !ignoreError {
+			if tmp, err := exec(ictx, nil); err != nil && !ignoreError {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			} else {
 				if err != nil {
@@ -108,7 +106,6 @@ func Middleware(filename string, size int, decoder func(data any) any, ignoreErr
 			if err := scanner.Err(); err != nil && !ignoreError {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())
 			}
-			// ctx = context.WithValue(ctx, sys_key.EOF, "eof")
 			ictx.Set(sys_key.EOF, "eof")
 			if tmp, err := next(ctx, nil); err != nil {
 				return nil, fmt.Errorf("%s:%s", "csv_reader_middleware:", err.Error())

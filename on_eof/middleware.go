@@ -11,15 +11,12 @@ import (
 func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-
+			var ok bool
 			var ictx *icontext.Context
-
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			eof := ictx.Get(sys_key.EOF)
-
 			if eof != nil {
 				next = func(ctx context.Context, req any) (any, error) {
 					return "", nil
@@ -27,9 +24,9 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 				for i := len(middlewares) - 1; i >= 0; i-- { // reverse
 					next = middlewares[i](next)
 				}
-				return next(ctx, req)
+				return next(ictx, req)
 			}
-			return next(ctx, req)
+			return next(ictx, req)
 		}
 	}
 }

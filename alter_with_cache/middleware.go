@@ -22,13 +22,12 @@ func Middleware(
 			}
 			original := req
 			var err error
-
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			inmem := ictx.Get(sys_key.CACHE_KEY)
-
 			if inmemCache, ok := inmem.(map[string]any); ok {
 				modified := original
 				if preprocessor != nil {
@@ -41,11 +40,11 @@ func Middleware(
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							result, err = next(ctx, modified)
+							result, err = next(ictx, modified)
 						}()
 						wg.Wait()
 					} else {
-						result, err = next(ctx, modified)
+						result, err = next(ictx, modified)
 					}
 					if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] && err != nil {
 						return nil, err

@@ -13,15 +13,17 @@ import (
 func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.Endpoint, preprocessor func(data any, err error) any, wait ...bool) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			cmd := redis.HGet(context.Background(), key, field)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
+			cmd := redis.HGet(ictx, key, field)
 			curr := cmd.Val()
 			if cmd.Err() != nil {
 				return nil, cmd.Err()
 			}
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
-			}
-			resp, err := next(ctx, req)
+			resp, err := next(ictx, req)
 			if curr == value {
 				if resp != nil || err != nil {
 					result := preprocessor(resp, err)
@@ -32,11 +34,11 @@ func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.
 							wg.Add(1)
 							go func() {
 								defer wg.Done()
-								e(ctx, result)
+								e(ictx.WithoutDeadline(), result)
 							}()
 							wg.Wait()
 						} else {
-							go e(ctx, result)
+							go e(ictx.WithoutDeadline(), result)
 						}
 					}
 				}
