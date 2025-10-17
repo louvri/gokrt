@@ -21,10 +21,12 @@ func Middleware(
 			for _, option := range opts {
 				opt[option] = true
 			}
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			resp, err := next(ctx, req)
+			resp, err := next(ictx, req)
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
 			if runOnError || err == nil {
 				result := resp
@@ -38,7 +40,7 @@ func Middleware(
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							e(ctx, result)
+							e(ictx.WithoutDeadline(), result)
 							if postprocessor != nil {
 								postprocessor(resp, err)
 							}
@@ -46,7 +48,7 @@ func Middleware(
 						wg.Wait()
 					} else {
 						go func() {
-							e(ctx, result)
+							e(ictx.WithoutDeadline(), result)
 							if postprocessor != nil {
 								postprocessor(resp, err)
 							}

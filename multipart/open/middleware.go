@@ -13,10 +13,11 @@ import (
 func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			eof := ictx.Get(sys_key.EOF)
 			if eof != nil && eof == "eof" {
 				return next(ctx, req)
@@ -44,7 +45,7 @@ func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 				fileObject[con.Name()] = con
 				ictx.Set(sys_key.FILE_OBJECT_KEY, fileObject)
 				// ctx = context.WithValue(ctx, sys_key.FILE_OBJECT_KEY, fileObject)
-				return next(ctx, req)
+				return next(ictx, req)
 			}
 		}
 

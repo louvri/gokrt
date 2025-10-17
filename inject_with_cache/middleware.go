@@ -11,10 +11,11 @@ import (
 func Middleware(preprocessor func(cache, data any) any, keys ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
 			inmem := ictx.Get(sys_key.CACHE_KEY)
 			if inmemCache, ok := inmem.(map[string]any); ok {
 				key := ""
@@ -23,19 +24,19 @@ func Middleware(preprocessor func(cache, data any) any, keys ...string) endpoint
 					if nKey == 1 {
 						key = keys[0]
 						req = preprocessor(inmemCache[key], req)
-						return next(ctx, req)
+						return next(ictx, req)
 					} else if nKey > 1 {
 						new := make(map[string]any)
 						for _, k := range keys {
 							new[k] = inmemCache[key]
 						}
 						req := preprocessor(new, req)
-						return next(ctx, req)
+						return next(ictx, req)
 					}
 				}
 			}
 			req = preprocessor(inmem, req)
-			return next(ctx, req)
+			return next(ictx, req)
 		}
 	}
 }

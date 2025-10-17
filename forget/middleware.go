@@ -16,8 +16,10 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	var c cache
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			outer := func(ctx context.Context, req any) (any, error) {
 				resp, err := next(ctx, req)
@@ -29,7 +31,7 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 			for i := len(middlewares) - 1; i >= 0; i-- {
 				curr = middlewares[i](curr)
 			}
-			curr(ctx, req)
+			curr(ictx, req)
 			return c.response, c.err
 		}
 	}

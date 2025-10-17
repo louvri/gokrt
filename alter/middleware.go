@@ -24,10 +24,12 @@ func Middleware(
 			var original any
 			var err error
 			runOnError := opt[RUN_WITH_OPTION.RUN_WITH_ERROR]
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			original, err = next(ctx, req)
+			original, err = next(ictx, req)
 			if err != nil && !runOnError {
 				return original, err
 			}
@@ -39,26 +41,17 @@ func Middleware(
 				}
 				if result != nil {
 					var altered any
-					if runAsync := opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT]; runAsync {
-						var wg sync.WaitGroup
-						wg.Add(1)
-						go func() {
-							defer wg.Done()
-							altered, err = e(ctx, result)
-						}()
-						wg.Wait()
-						if postprocessor == nil {
-							return altered, err
-						}
-						return postprocessor(original, altered, err)
-					} else {
-						altered, err = e(ctx, result)
-						if postprocessor == nil {
-							return altered, err
-						}
-						return postprocessor(original, altered, err)
+					var wg sync.WaitGroup
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						altered, err = e(ictx.WithoutDeadline(), result)
+					}()
+					wg.Wait()
+					if postprocessor == nil {
+						return altered, err
 					}
-
+					return postprocessor(original, altered, err)
 				} else {
 					return nil, nil
 				}

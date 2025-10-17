@@ -15,10 +15,9 @@ type Context struct {
 func New(ctx context.Context) context.Context {
 	if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*Context); ok {
 		return ctx
+	} else {
+		return Hijack(ctx)
 	}
-	base := Hijack(ctx)
-	ctx = context.WithValue(ctx, sys_key.GOKRT_CONTEXT, base)
-	return ctx
 }
 
 func Hijack(ctx context.Context) *Context {
@@ -35,15 +34,10 @@ func Hijack(ctx context.Context) *Context {
 				sys_key.EOF:             ctx.Value(sys_key.EOF),
 				sys_key.DATA_REF:        ctx.Value(sys_key.DATA_REF),
 				sys_key.CACHE_KEY:       ctx.Value(sys_key.CACHE_KEY),
-				sys_key.GOKRT_CONTEXT:   ctx.Value(sys_key.GOKRT_CONTEXT),
 			},
 		}
 	}
 	return base
-}
-
-func (c *Context) Base() context.Context {
-	return c.base
 }
 
 func (c *Context) Get(key sys_key.SysKey) any {
@@ -92,13 +86,19 @@ func (c *Context) Set(key, value any) {
 
 // override
 func (c *Context) Deadline() (time.Time, bool) {
-	return time.Time{}, false
+	return c.base.Deadline()
 }
-func (c *Context) Done() <-chan struct{} { return nil }
+
+func (c *Context) Done() <-chan struct{} { return c.base.Done() }
 
 func (c *Context) Value(key any) any {
 	return c.base.Value(key)
 }
+
 func (c *Context) Err() error {
-	return nil
+	return c.base.Err()
+}
+
+func (c *Context) WithoutDeadline() context.Context {
+	return NewContextWithoutDeadline(c.base)
 }

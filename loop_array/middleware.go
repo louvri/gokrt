@@ -16,16 +16,17 @@ import (
 func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any, postprocessor func(original, data any, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
 			errorCollection := make([]map[string]any, 0)
-
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
 			}
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
-			}
-			ori, err := next(ctx, req)
+			ori, err := next(ictx, req)
 			if err != nil {
 				return nil, err
 			} else if ori != nil {
@@ -37,7 +38,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any,
 						} else {
 							req = data
 						}
-						resp, err := e(ctx, req)
+						resp, err := e(ictx, req)
 						if err != nil {
 							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 								return nil, err
@@ -76,7 +77,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any,
 				}
 
 				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					ctx, kit := gosl.New(ctx)
+					ctx, kit := gosl.New(ictx)
 					if opt[RUN_WITH_OPTION.RUN_ASYNC_WAIT] {
 						var err error
 						var wg sync.WaitGroup

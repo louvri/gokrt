@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
+	icontext "github.com/louvri/gokrt/context"
+	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
@@ -14,6 +16,11 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	var c cache
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
 			outer := func(ctx context.Context, req any) (any, error) {
 				resp, err := next(ctx, req)
 				c.response = resp
@@ -24,7 +31,7 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 			for i := len(middlewares) - 1; i >= 0; i-- {
 				curr = middlewares[i](curr)
 			}
-			_, err := curr(ctx, req)
+			_, err := curr(ictx, req)
 			return c.response, err
 		}
 	}

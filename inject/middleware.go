@@ -24,10 +24,12 @@ func Middleware(
 					config[opt] = true
 				}
 			}
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			response, err = e(ctx, req)
+			response, err = e(ictx, req)
 			if err != nil && config[option.RUN_WITH_ERROR] {
 				return nil, err
 			}
@@ -37,7 +39,7 @@ func Middleware(
 				return nil, err
 			}
 
-			return next(ctx, modified)
+			return next(ictx, modified)
 		}
 	}
 }

@@ -12,12 +12,11 @@ import (
 func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
 			var ictx *icontext.Context
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
-
 			eof := ictx.Get(sys_key.EOF)
 			if eof != nil && eof == "eof" {
 				return next(ctx, req)
@@ -52,7 +51,7 @@ func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Mid
 				fileObject[name] = con
 				// ctx = context.WithValue(ctx, sys_key.FILE_OBJECT_KEY, fileObject)
 				ictx.Set(sys_key.FILE_OBJECT_KEY, fileObject)
-				return next(ctx, req)
+				return next(ictx, req)
 			}
 		}
 

@@ -23,27 +23,20 @@ func Middleware(
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
 			}
-			/*
-				var kit gosl.Kit
-				if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-					kit = gosl.New(ctx)
-				}
-			*/
 			var prev, curr any
 			var err error
 			var response any
 			curr = make([]map[string]any, 0)
 			errorCollection := make([]map[string]any, 0)
-
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
-			}
-			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
-
 			run := func(iteration int, ctx context.Context) (any, error) {
 				inner := func(iteration int) (any, error) {
 					prev = curr
@@ -99,7 +92,7 @@ func Middleware(
 				ictx.Set(sys_key.SOF, true)
 			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
-				ctx, kit := gosl.New(ctx)
+				ctx, kit := gosl.New(ictx)
 				if err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 					for !comparator(prev, curr) {
 						response, err = run(idx, ctx)
