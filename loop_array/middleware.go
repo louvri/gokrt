@@ -9,7 +9,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	icontext "github.com/louvri/gokrt/context"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
-	"github.com/louvri/gokrt/sys_key"
 	"github.com/louvri/gosl"
 )
 
@@ -18,7 +17,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any,
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			errorCollection := make([]map[string]any, 0)

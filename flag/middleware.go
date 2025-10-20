@@ -16,7 +16,7 @@ func Middleware(key, field string, value, endstate any, duration time.Duration, 
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			if value == nil {
@@ -43,9 +43,9 @@ func Middleware(key, field string, value, endstate any, duration time.Duration, 
 					return next(ctx, req)
 				}
 			}
-			redis.Expire(ctx, key, duration)
-			redis.HSet(ctx, key, field, value)
-			return next(ctx, req)
+			redis.Expire(ictx.WithoutDeadline(), key, duration)
+			redis.HSet(ictx.WithoutDeadline(), key, field, value)
+			return next(ictx.WithoutDeadline(), req)
 		}
 	}
 }

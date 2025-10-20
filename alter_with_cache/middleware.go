@@ -16,17 +16,17 @@ func Middleware(
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
 				opt[option] = true
 			}
 			original := req
 			var err error
-			var ok bool
-			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ictx = icontext.New(ctx).(*icontext.Context)
-			}
 			inmem := ictx.Get(sys_key.CACHE_KEY)
 			if inmemCache, ok := inmem.(map[string]any); ok {
 				modified := original
