@@ -8,7 +8,6 @@ import (
 	"github.com/johnjerrico/hantu"
 	"github.com/johnjerrico/hantu/schema"
 	icontext "github.com/louvri/gokrt/context"
-	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorMessage string, callback func(id string, request any, timestamp string), middlewares ...endpoint.Middleware) endpoint.Middleware {
@@ -24,7 +23,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 		return func(ctx context.Context, request any) (any, error) {
 			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			response, ierr := next(ictx, request)

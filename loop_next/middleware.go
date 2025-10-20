@@ -25,7 +25,7 @@ func Middleware(
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
@@ -45,9 +45,10 @@ func Middleware(
 					curr = response
 					if err != nil {
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							// ctx = context.WithValue(ctx, sys_key.EOF, "err")
-							ictx.Set(sys_key.EOF, "err")
-							response, _ = next(ctx, nil)
+							if ictx, ok = ctx.(*icontext.Context); ok {
+								ictx.Set(sys_key.EOF, "err")
+								response, _ = next(ictx, nil)
+							}
 						}
 						if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 							return nil, err
@@ -81,14 +82,12 @@ func Middleware(
 				return inner(iteration)
 			}
 
-			// eof := ctx.Value(sys_key.EOF)
 			eof := ictx.Get(sys_key.EOF)
 			if eof != nil {
 				return next(ctx, nil)
 			}
 			var idx int
 			if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-				// ctx = context.WithValue(ctx, sys_key.SOF, true)
 				ictx.Set(sys_key.SOF, true)
 			}
 			if opt[RUN_WITH_OPTION.RUN_IN_TRANSACTION] {
@@ -101,9 +100,9 @@ func Middleware(
 						}
 						idx++
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							// Set SOF to false before calling next
-							// ctx = context.WithValue(ctx, sys_key.SOF, false)
-							ictx.Set(sys_key.SOF, false)
+							if ictx, ok = ctx.(*icontext.Context); ok {
+								ictx.Set(sys_key.SOF, false)
+							}
 						}
 					}
 					return nil
@@ -112,23 +111,20 @@ func Middleware(
 				}
 			} else {
 				for !comparator(prev, curr) {
-					response, err = run(idx, ctx)
+					response, err = run(idx, ictx)
 					if err != nil {
 						return nil, err
 					}
 					idx++
 					if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-						// Set SOF to false before calling next
-						// ctx = context.WithValue(ctx, sys_key.SOF, false) // Update the context here
 						ictx.Set(sys_key.SOF, false)
 					}
 				}
 
 			}
 			if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-				// ctx = context.WithValue(ctx, sys_key.EOF, "eof")
 				ictx.Set(sys_key.EOF, "eof")
-				if eofResponse, eofErr := next(ctx, nil); eofErr != nil {
+				if eofResponse, eofErr := next(ictx, nil); eofErr != nil {
 					return nil, eofErr
 				} else {
 					response = eofResponse

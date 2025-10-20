@@ -13,7 +13,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...stri
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			_cacheFromContext := ictx.Get(sys_key.CACHE_KEY)
@@ -26,7 +26,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...stri
 				iReq = preprocessor(iReq)
 			}
 			if iReq != nil {
-				data, err := e(ictx.WithoutDeadline(), iReq)
+				data, err := e(ictx, iReq)
 				if err != nil {
 					return nil, err
 				}

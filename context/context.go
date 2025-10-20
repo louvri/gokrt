@@ -13,7 +13,7 @@ type Context struct {
 }
 
 func New(ctx context.Context) context.Context {
-	if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*Context); ok {
+	if _, ok := ctx.(*Context); ok {
 		return ctx
 	} else {
 		return Hijack(ctx)
@@ -22,7 +22,7 @@ func New(ctx context.Context) context.Context {
 
 func Hijack(ctx context.Context) *Context {
 	var base *Context
-	if tmp, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*Context); ok {
+	if tmp, ok := ctx.(*Context); ok {
 		base = tmp
 	} else {
 		base = &Context{

@@ -17,15 +17,15 @@ import (
 func Middleware(filename string, columns []string, cancelOnError bool, splitter ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
 			splitterRune := ';'
 			if len(splitter) > 0 && splitter[0] != "" {
 				r := []rune(splitter[0])
 				splitterRune = r[0]
-			}
-			var ok bool
-			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			response, responseError := next(ictx, req)
 			if responseError != nil && cancelOnError {

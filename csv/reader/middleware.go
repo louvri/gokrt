@@ -17,18 +17,16 @@ import (
 func Middleware(filename string, size int, decoder func(data any) any, ignoreError bool, splitterSym ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
+			var ok bool
+			var ictx *icontext.Context
+			if ictx, ok = ctx.(*icontext.Context); !ok {
+				ictx = icontext.New(ctx).(*icontext.Context)
+			}
 			splitter := ";"
 			if len(splitterSym) > 0 && splitterSym[0] != "" {
 				splitter = splitterSym[0]
 			}
 			var reader io.Reader
-			var ictx *icontext.Context
-
-			if _, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
-				ctx = icontext.New(ctx)
-			}
-			ictx = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
-
 			if tmp, ok := ictx.Get(sys_key.FILE_KEY).(map[string]any); tmp != nil && ok {
 				reader = tmp[filename].(io.Reader)
 			} else {

@@ -14,6 +14,9 @@ func NewContextWithoutDeadline(ctx context.Context) context.Context {
 		base: ctx,
 	}
 }
+func (c *ContextWithoutDeadline) Base() context.Context {
+	return c.base
+}
 
 func (c *ContextWithoutDeadline) Deadline() (time.Time, bool) {
 	return time.Time{}, false

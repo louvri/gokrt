@@ -13,7 +13,7 @@ func Middleware(preprocessor func(cache, data any) any, keys ...string) endpoint
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context); !ok {
+			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			inmem := ictx.Get(sys_key.CACHE_KEY)
