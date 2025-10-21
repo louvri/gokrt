@@ -8,11 +8,7 @@ import (
 )
 
 func Middleware(postprocessor func(original, data any, err error) (any, error), middlewares ...endpoint.Middleware) endpoint.Middleware {
-	type cache struct {
-		response any
-		err      error
-	}
-	var c cache
+
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
@@ -21,20 +17,17 @@ func Middleware(postprocessor func(original, data any, err error) (any, error), 
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			outer := func(ctx context.Context, req any) (any, error) {
-				resp, err := next(ctx, req)
-				c.response = resp
-				c.err = err
-				return resp, err
+				return next(ctx, req)
 			}
 			curr := outer
 			for i := len(middlewares) - 1; i >= 0; i-- {
 				curr = middlewares[i](curr)
 			}
-			_, err := curr(ictx, req)
+			response, err := curr(ictx, req)
 			if postprocessor != nil {
-				return postprocessor(req, c.response, err)
+				return postprocessor(req, response, err)
 			} else {
-				return c.response, err
+				return response, err
 			}
 		}
 	}
