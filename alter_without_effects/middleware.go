@@ -7,7 +7,7 @@ import (
 	icontext "github.com/louvri/gokrt/context"
 )
 
-func Middleware(postprocessor func(original, data any, err error) (any, error), middlewares ...endpoint.Middleware) endpoint.Middleware {
+func Middleware(postprocessor func(original, data any, err error) (any, error), outer endpoint.Middleware, middlewares ...endpoint.Middleware) endpoint.Middleware {
 
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
@@ -16,14 +16,10 @@ func Middleware(postprocessor func(original, data any, err error) (any, error), 
 			if ictx, ok = ctx.(*icontext.Context); !ok {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
-			outer := func(ctx context.Context, req any) (any, error) {
-				return next(ctx, req)
-			}
-			curr := outer
 			for i := len(middlewares) - 1; i >= 0; i-- {
-				curr = middlewares[i](curr)
+				next = middlewares[i](next)
 			}
-			response, err := curr(ictx, req)
+			response, err := outer(next)(ictx, req)
 			if postprocessor != nil {
 				return postprocessor(req, response, err)
 			} else {
