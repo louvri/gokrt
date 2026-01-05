@@ -21,9 +21,16 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 			Max: 50,
 		})
 		return func(ctx context.Context, request any) (any, error) {
-			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.(*icontext.Context); !ok {
+			switch c := ctx.(type) {
+			case *icontext.Context:
+				ictx = c
+			case *icontext.ContextWithoutDeadline:
+				if tmp, ok := c.Base().(*icontext.Context); ok {
+					ictx = tmp
+				}
+			}
+			if ictx == nil {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			response, ierr := next(ictx, request)

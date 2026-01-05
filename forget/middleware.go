@@ -15,9 +15,16 @@ func Middleware(middlewares ...endpoint.Middleware) endpoint.Middleware {
 	var c cache
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ok bool
 			var ictx *icontext.Context
-			if ictx, ok = ctx.(*icontext.Context); !ok {
+			switch c := ctx.(type) {
+			case *icontext.Context:
+				ictx = c
+			case *icontext.ContextWithoutDeadline:
+				if tmp, ok := c.Base().(*icontext.Context); ok {
+					ictx = tmp
+				}
+			}
+			if ictx == nil {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			outer := func(ctx context.Context, req any) (any, error) {
