@@ -100,5 +100,5 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) WithoutDeadline() context.Context {
-	return NewContextWithoutDeadline(c.base)
+	return NewContextWithoutDeadline(c)
 }
