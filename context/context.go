@@ -100,5 +100,13 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) WithoutDeadline() context.Context {
-	return NewContextWithoutDeadline(c)
+	newCtx := &Context{
+		base:       NewContextWithoutDeadline(c.base),
+		properties: make(map[sys_key.SysKey]any, len(c.properties)),
+	}
+
+	for k, v := range c.properties {
+		newCtx.properties[k] = v
+	}
+	return newCtx
 }
