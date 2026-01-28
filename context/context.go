@@ -2,7 +2,9 @@ package icontext
 
 import (
 	"context"
+	"reflect"
 	"time"
+	"unsafe"
 
 	"github.com/louvri/gokrt/sys_key"
 )
@@ -28,12 +30,13 @@ func Hijack(ctx context.Context) *Context {
 		base = &Context{
 			base: ctx,
 			properties: map[sys_key.SysKey]any{
-				sys_key.FILE_KEY:        ctx.Value(sys_key.FILE_KEY),
-				sys_key.FILE_OBJECT_KEY: ctx.Value(sys_key.FILE_OBJECT_KEY),
-				sys_key.SOF:             ctx.Value(sys_key.SOF),
-				sys_key.EOF:             ctx.Value(sys_key.EOF),
-				sys_key.DATA_REF:        ctx.Value(sys_key.DATA_REF),
-				sys_key.CACHE_KEY:       ctx.Value(sys_key.CACHE_KEY),
+				sys_key.FILE_KEY:                 ctx.Value(sys_key.FILE_KEY),
+				sys_key.FILE_OBJECT_KEY:          ctx.Value(sys_key.FILE_OBJECT_KEY),
+				sys_key.SOF:                      ctx.Value(sys_key.SOF),
+				sys_key.EOF:                      ctx.Value(sys_key.EOF),
+				sys_key.DATA_REF:                 ctx.Value(sys_key.DATA_REF),
+				sys_key.CACHE_KEY:                ctx.Value(sys_key.CACHE_KEY),
+				sys_key.GOKRT_CONTEXT_RESET_FLAG: false,
 			},
 		}
 	}
@@ -110,8 +113,21 @@ func (c *Context) WithoutDeadline() context.Context {
 	if _, hasDeadline := baseCtx.Deadline(); !hasDeadline {
 		return c
 	}
+	var altered context.Context
+	if reset, ok := c.properties[sys_key.GOKRT_CONTEXT_RESET_FLAG].(bool); ok && !reset {
+		existing := extract(baseCtx)
+		altered = context.Background()
+
+		for key, val := range existing {
+			altered = context.WithValue(altered, key, val)
+		}
+		c.properties[sys_key.GOKRT_CONTEXT_RESET_FLAG] = true
+	} else {
+		altered = baseCtx
+	}
+
 	newCtx := &Context{
-		base:       NewContextWithoutDeadline(baseCtx),
+		base:       NewContextWithoutDeadline(altered),
 		properties: make(map[sys_key.SysKey]any, len(c.properties)),
 	}
 
@@ -120,4 +136,60 @@ func (c *Context) WithoutDeadline() context.Context {
 	}
 
 	return newCtx
+}
+
+func extract(ctx context.Context) map[any]any {
+	values := make(map[any]any)
+
+	currentCtx := ctx
+	for currentCtx != nil {
+		// Get the reflect value
+		val := reflect.ValueOf(currentCtx)
+
+		// If it's a pointer, get the element
+		if val.Kind() == reflect.Ptr {
+			val = val.Elem()
+		}
+
+		// Check if it's a struct
+		if val.Kind() != reflect.Struct {
+			break
+		}
+
+		// Try to find "key" and "val" fields (valueCtx structure)
+		keyField := val.FieldByName("key")
+		valField := val.FieldByName("val")
+
+		if keyField.IsValid() && valField.IsValid() {
+			// Use unsafe to access unexported fields
+			keyField = reflect.NewAt(keyField.Type(), unsafe.Pointer(keyField.UnsafeAddr())).Elem()
+			valField = reflect.NewAt(valField.Type(), unsafe.Pointer(valField.UnsafeAddr())).Elem()
+
+			if keyField.CanInterface() && valField.CanInterface() {
+				values[keyField.Interface()] = valField.Interface()
+			}
+		}
+
+		// Try to get parent context
+		parentField := val.FieldByName("Context")
+		if !parentField.IsValid() {
+			break
+		}
+
+		// Use unsafe to access unexported field
+		parentField = reflect.NewAt(parentField.Type(), unsafe.Pointer(parentField.UnsafeAddr())).Elem()
+
+		if !parentField.CanInterface() {
+			break
+		}
+
+		// Move to parent context
+		if nextCtx, ok := parentField.Interface().(context.Context); ok {
+			currentCtx = nextCtx
+		} else {
+			break
+		}
+	}
+
+	return values
 }
