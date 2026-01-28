@@ -26,7 +26,9 @@ func Middleware(
 			var ok bool
 			var ictx *icontext.Context
 
-			if ictx == nil {
+			if tmp, ok := ctx.(*icontext.Context); ok {
+				ictx = tmp
+			} else {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)

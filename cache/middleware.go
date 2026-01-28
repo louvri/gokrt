@@ -12,7 +12,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...stri
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
-			if ictx == nil {
+			if tmp, ok := ctx.(*icontext.Context); ok {
+				ictx = tmp
+			} else {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			_cacheFromContext := ictx.Get(sys_key.CACHE_KEY)

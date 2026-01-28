@@ -17,7 +17,9 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any,
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
 
-			if ictx == nil {
+			if tmp, ok := ctx.(*icontext.Context); ok {
+				ictx = tmp
+			} else {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			errorCollection := make([]map[string]any, 0)

@@ -17,7 +17,9 @@ func Middleware(
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
 
-			if ictx == nil {
+			if tmp, ok := ctx.(*icontext.Context); ok {
+				ictx = tmp
+			} else {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			var response, modified any
