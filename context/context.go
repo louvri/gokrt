@@ -2,7 +2,6 @@ package icontext
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/louvri/gokrt/sys_key"
@@ -22,7 +21,6 @@ func New(ctx context.Context) context.Context {
 }
 
 func Hijack(ctx context.Context) *Context {
-	fmt.Println("hijack triggered")
 	var base *Context
 	if tmp, ok := ctx.(*Context); ok {
 		base = tmp
