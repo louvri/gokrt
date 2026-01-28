@@ -13,15 +13,10 @@ func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
-			switch c := ctx.(type) {
-			case *icontext.Context:
-				ictx = c
-			case *icontext.ContextWithoutDeadline:
-				if tmp, ok := c.Base().(*icontext.Context); ok {
-					ictx = tmp
-				}
-			}
-			if ictx == nil {
+
+			if tmp, ok := ctx.(*icontext.Context); ok {
+				ictx = tmp
+			} else {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			cmd := redis.HGet(ictx, key, field)

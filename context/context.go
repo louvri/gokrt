@@ -2,6 +2,7 @@ package icontext
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/louvri/gokrt/sys_key"
@@ -21,6 +22,7 @@ func New(ctx context.Context) context.Context {
 }
 
 func Hijack(ctx context.Context) *Context {
+	fmt.Println("hijack triggered")
 	var base *Context
 	if tmp, ok := ctx.(*Context); ok {
 		base = tmp
@@ -38,6 +40,7 @@ func Hijack(ctx context.Context) *Context {
 		}
 	}
 	return base
+
 }
 
 func (c *Context) Get(key sys_key.SysKey) any {
@@ -100,5 +103,23 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) WithoutDeadline() context.Context {
-	return NewContextWithoutDeadline(c)
+	// Unwrap to get the actual base
+	baseCtx := c.base
+	if _, ok := baseCtx.(*ContextWithoutDeadline); ok {
+		return c
+	}
+
+	if _, hasDeadline := baseCtx.Deadline(); !hasDeadline {
+		return c
+	}
+	newCtx := &Context{
+		base:       NewContextWithoutDeadline(baseCtx),
+		properties: make(map[sys_key.SysKey]any, len(c.properties)),
+	}
+
+	for k, v := range c.properties {
+		newCtx.properties[k] = v
+	}
+
+	return newCtx
 }

@@ -17,15 +17,10 @@ func Middleware(filename string, columns []string, cancelOnError bool) endpoint.
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
-			switch c := ctx.(type) {
-			case *icontext.Context:
-				ictx = c
-			case *icontext.ContextWithoutDeadline:
-				if tmp, ok := c.Base().(*icontext.Context); ok {
-					ictx = tmp
-				}
-			}
-			if ictx == nil {
+
+			if tmp, ok := ctx.(*icontext.Context); ok {
+				ictx = tmp
+			} else {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			eof := ictx.Get(sys_key.EOF)
