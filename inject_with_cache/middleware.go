@@ -12,14 +12,7 @@ func Middleware(preprocessor func(cache, data any) any, keys ...string) endpoint
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ictx *icontext.Context
-			switch c := ctx.(type) {
-			case *icontext.Context:
-				ictx = c
-			case *icontext.ContextWithoutDeadline:
-				if tmp, ok := c.Base().(*icontext.Context); ok {
-					ictx = tmp
-				}
-			}
+
 			if ictx == nil {
 				ictx = icontext.New(ctx).(*icontext.Context)
 			}
