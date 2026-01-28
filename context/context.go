@@ -110,9 +110,6 @@ func (c *Context) WithoutDeadline() context.Context {
 		return c
 	}
 
-	if _, hasDeadline := baseCtx.Deadline(); !hasDeadline {
-		return c
-	}
 	var altered context.Context
 	if reset, ok := c.properties[sys_key.GOKRT_CONTEXT_RESET_FLAG].(bool); ok && !reset {
 		existing := extract(baseCtx)
