@@ -55,7 +55,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 					if callback != nil {
 						callback(id, converted, timestamp)
 					}
-					_, err := retry(ictx.WithoutDeadline(), converted["request"])
+					_, err := retry(ictx, converted["request"])
 					if err != nil {
 						if cnt, ok := converted["counter"].(int); ok && cnt < numberOfRetries {
 							converted["counter"] = cnt + 1

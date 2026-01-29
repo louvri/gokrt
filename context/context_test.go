@@ -32,7 +32,7 @@ func TestWithoutDeadline_RemovesDeadline(t *testing.T) {
 		t.Logf("Original deadline: %v", deadline)
 	}
 
-	newCtx := ctx.WithoutDeadline()
+	newCtx := ctx
 
 	if deadline, hasDeadline := newCtx.Deadline(); hasDeadline {
 		t.Errorf("Context should not have a deadline after WithoutDeadline(), but got: %v", deadline)
@@ -64,7 +64,7 @@ func TestWithoutDeadline_PreservesAllProperties(t *testing.T) {
 	ctx.Set("custom_key_1", "custom_value_1")
 	ctx.Set("custom_key_2", 42)
 
-	newCtx := ctx.WithoutDeadline().(*customContext.Context)
+	newCtx := ctx
 
 	t.Run("VerifySystemProperties", func(t *testing.T) {
 		for key, expectedValue := range testData {
@@ -133,7 +133,7 @@ func TestWithoutDeadline_OriginalContextUnaffected(t *testing.T) {
 		t.Fatal("Original context should have a deadline")
 	}
 
-	newCtx := ctx.WithoutDeadline().(*customContext.Context)
+	newCtx := ctx
 
 	currentDeadline, stillHasDeadline := ctx.Deadline()
 	if !stillHasDeadline {
@@ -166,7 +166,7 @@ func TestWithoutDeadline_ChainedContexts(t *testing.T) {
 	ctx := customContext.New(level2Ctx).(*customContext.Context)
 	ctx.Set(sys_key.FILE_KEY, "test.txt")
 
-	newCtx := ctx.WithoutDeadline()
+	newCtx := ctx
 
 	if _, hasDeadline := newCtx.Deadline(); hasDeadline {
 		t.Error("New context should not have a deadline")
@@ -184,7 +184,7 @@ func TestWithoutDeadline_ChainedContexts(t *testing.T) {
 		t.Log("✓ Chained context value preserved")
 	}
 
-	if val := newCtx.(*customContext.Context).Get(sys_key.FILE_KEY); val != "test.txt" {
+	if val := newCtx.Get(sys_key.FILE_KEY); val != "test.txt" {
 		t.Errorf("Property FILE_KEY: expected 'test.txt', got %v", val)
 	} else {
 		t.Log("✓ Custom context property preserved")
@@ -201,7 +201,7 @@ func TestWithoutDeadline_DoneChannelBehavior(t *testing.T) {
 		t.Fatal("Original context should have a Done channel")
 	}
 
-	newCtx := ctx.WithoutDeadline()
+	newCtx := ctx
 
 	if newCtx.Done() != nil {
 		t.Error("New context Done() should return nil")

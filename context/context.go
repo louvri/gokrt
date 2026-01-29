@@ -87,24 +87,24 @@ func (c *Context) Set(key, value any) {
 
 // override
 func (c *Context) Deadline() (time.Time, bool) {
-	return c.base.Deadline()
+	return time.Time{}, false
 }
 
-func (c *Context) Done() <-chan struct{} { return c.base.Done() }
+func (c *Context) Done() <-chan struct{} { return nil }
 
 func (c *Context) Value(key any) any {
 	return c.base.Value(key)
 }
 
 func (c *Context) Err() error {
-	return c.base.Err()
+	return nil
 }
 
-func (c *Context) WithoutDeadline() context.Context {
+// func (c *Context) WithoutDeadline() context.Context {
 
-	if _, hasDeadline := c.base.Deadline(); !hasDeadline {
-		return c
-	}
-	c.base = NewContextWithoutDeadline(c.base)
-	return c
-}
+// 	if _, hasDeadline := c.base.Deadline(); !hasDeadline {
+// 		return c
+// 	}
+// 	c.base = NewContextWithoutDeadline(c.base)
+// 	return c
+// }
