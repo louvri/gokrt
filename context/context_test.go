@@ -365,3 +365,160 @@ func TestNestedContextWithoutDeadline(t *testing.T) {
 	}
 	time.Sleep(40 * time.Second)
 }
+
+func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
+	con := gosl.NewQueryable(gosl.ConnectToDB(
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx",
+		1,
+		1,
+		2*time.Minute,
+		2*time.Minute,
+	))
+
+	baseCtx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	baseCtx = context.WithValue(baseCtx, gosl.SQL_KEY, con)
+	defer cancel()
+
+	// baseCtx := context.WithValue(context.Background(), gosl.SQL_KEY, con)
+
+	b := time.Now()
+
+	ep1 := func(ctx context.Context, req any) (any, error) {
+		select {
+		case <-ctx.Done():
+			t.Error("deadline exceeds on ep2")
+			return nil, errors.New("deadline exceeds ep2")
+		default:
+			time.Sleep(5 * time.Second)
+			var queryable *gosl.Queryable
+			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+			if ok {
+				queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+			} else {
+				ref := ctx.Value(gosl.SQL_KEY)
+				if ref == nil {
+					err := errors.New("database is not initialized")
+					return nil, err
+				}
+				queryable = ref.(*gosl.Queryable)
+			}
+
+			ctx, kit := gosl.New(ctx)
+			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "ep1"))
+				if err != nil {
+					t.Error(err.Error())
+					log.Println(err.Error())
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				t.Error(err.Error())
+				log.Println(err.Error())
+			}
+			after := time.Now()
+			log.Printf("ep1 executed after %f", after.Sub(b).Seconds())
+			return nil, nil
+		}
+	}
+
+	ep2 := func(ctx context.Context, req any) (any, error) {
+		select {
+		case <-ctx.Done():
+			t.Error("deadline exceeds on ep2")
+			return nil, errors.New("deadline exceeds ep2")
+		default:
+			time.Sleep(5 * time.Second)
+			var queryable *gosl.Queryable
+			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+			if ok {
+				queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+			} else {
+				ref := ctx.Value(gosl.SQL_KEY)
+				if ref == nil {
+					err := errors.New("database is not initialized")
+					log.Println(err.Error())
+					return nil, err
+				}
+				queryable = ref.(*gosl.Queryable)
+			}
+			_, kit := gosl.New(ctx)
+			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "ep2"))
+				if err != nil {
+					t.Error(err.Error())
+					log.Println(err.Error())
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				t.Error(err.Error())
+				log.Println(err.Error())
+			}
+			after := time.Now()
+			log.Printf("ep2 executed after %f", after.Sub(b).Seconds())
+			return nil, nil
+		}
+	}
+
+	main := func(ctx context.Context, req any) (any, error) {
+		var queryable *gosl.Queryable
+
+		select {
+		case <-ctx.Done():
+			t.Error("deadline exceeds on main")
+			return nil, errors.New("deadline exceeds on main")
+		default:
+			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+			if ok {
+				queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+			} else {
+				ref := ctx.Value(gosl.SQL_KEY)
+				if ref == nil {
+					err := errors.New("database is not initialized")
+					return nil, err
+				}
+				queryable = ref.(*gosl.Queryable)
+			}
+			_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "main"))
+			if err != nil {
+				t.Error(err.Error())
+				log.Println(err.Error())
+				return nil, err
+			}
+			after := time.Now()
+			log.Printf("main executed after %f", after.Sub(b).Seconds())
+			return "main", nil
+		}
+	}
+
+	bc := func(ctx context.Context, req any) (any, error) {
+		return nil, nil
+	}
+	_, err := endpoint.Chain(
+		forget.Middleware(
+			after.Middleware(bc, func(data any, err error) any {
+				return "data"
+			}, nil),
+		),
+		after.Middleware(ep2, nil, nil),
+		after.Middleware(ep1, nil, nil),
+		after.Middleware(ep2, nil, nil),
+		after.Middleware(ep1, nil, nil),
+	)(main)(baseCtx, "main")
+	after := time.Now()
+
+	d := after.Sub(b)
+	log.Printf("executed on %fs \n", d.Seconds())
+	log.Println("chaining done")
+	if err != nil {
+		t.Errorf("⚠️  Shouldn't be any error: %s", err.Error())
+	}
+	time.Sleep(60 * time.Second)
+}
