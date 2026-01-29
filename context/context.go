@@ -12,7 +12,7 @@ type Context struct {
 	properties map[sys_key.SysKey]any
 }
 
-func New(ctx context.Context) any {
+func New(ctx context.Context) context.Context {
 	if _, ok := ctx.(*Context); ok {
 		return ctx
 	} else {
@@ -101,23 +101,5 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) WithoutDeadline() context.Context {
-	// Unwrap to get the actual base
-	baseCtx := c.base
-	if _, ok := baseCtx.(*ContextWithoutDeadline); ok {
-		return c
-	}
-
-	if _, hasDeadline := baseCtx.Deadline(); !hasDeadline {
-		return c
-	}
-	newCtx := &Context{
-		base:       NewContextWithoutDeadline(baseCtx),
-		properties: make(map[sys_key.SysKey]any, len(c.properties)),
-	}
-
-	for k, v := range c.properties {
-		newCtx.properties[k] = v
-	}
-
-	return newCtx
+	return NewContextWithoutDeadline(c.base)
 }
