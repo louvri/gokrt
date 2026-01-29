@@ -1,4 +1,4 @@
-package icontext_test
+package context_test
 
 import (
 	"context"
@@ -520,4 +520,24 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 		t.Errorf("⚠️  Shouldn't be any error: %s", err.Error())
 	}
 	time.Sleep(20 * time.Second)
+}
+
+func TestReference(t *testing.T) {
+	ctxA := customContext.New(context.Background())
+
+	ctxA1 := ctxA.(*customContext.Context)
+	ctxA1.Set(sys_key.FILE_KEY, "A")
+	ctxA1.Set(sys_key.FILE_OBJECT_KEY, "B")
+	ctxA1.Set(sys_key.SOF, "C")
+	ctxA1.Set(sys_key.EOF, "D")
+	ctxA1.Set(sys_key.DATA_REF, "E")
+	ctxA1.Set(sys_key.CACHE_KEY, "F")
+
+	ctxB := ctxA1.WithoutDeadline()
+	ctxB1 := ctxB.(*customContext.ContextWithoutDeadline)
+	ctxB1.Set(sys_key.FILE_KEY, "BBBB")
+
+	if ctxB1.Get(sys_key.FILE_KEY) != ctxA1.Get(sys_key.FILE_KEY) {
+		t.Log("should same since it's pass by memory")
+	}
 }

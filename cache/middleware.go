@@ -11,11 +11,11 @@ import (
 func Middleware(e endpoint.Endpoint, preprocessor func(req any) any, key ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx *icontext.Context
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			var ictx icontext.Icontext
+			if tmp, ok := ctx.(icontext.Icontext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			_cacheFromContext := ictx.Get(sys_key.CACHE_KEY)
 			_key := ""

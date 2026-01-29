@@ -24,12 +24,12 @@ func Middleware(
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
-			var ictx *icontext.Context
+			var ictx icontext.Icontext
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.Icontext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {

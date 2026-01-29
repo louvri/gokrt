@@ -52,7 +52,7 @@ func TestMiddleware_WithEOF(t *testing.T) {
 	ictx.Set(sys_key.EOF, "true")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
-	ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+	// ictx = icontext.New(ctx).(icontext.Icontext)
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
@@ -92,7 +92,7 @@ func TestMiddleware_WithoutEOF(t *testing.T) {
 	ictx.Set(sys_key.EOF, "") // No EOF set
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
-	ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+	// ictx = icontext.New(ctx).(icontext.Icontext)
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
@@ -166,7 +166,7 @@ func TestMiddleware_WithoutFileObjects(t *testing.T) {
 	ictx.Set(sys_key.EOF, "true")
 	// No FILE_OBJECT_KEY set
 
-	ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+	// ictx = icontext.New(ctx).(icontext.Icontext)
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
@@ -191,7 +191,7 @@ func TestMiddleware_WithInvalidFileObjects(t *testing.T) {
 	ictx.Set(sys_key.EOF, "true")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, "invalid_file_objects") // Not a map
 
-	ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+	// ictx = icontext.New(ctx).(icontext.Icontext)
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
@@ -230,7 +230,7 @@ func TestMiddleware_MixedConnectionTypes(t *testing.T) {
 	ictx.Set(sys_key.EOF, "end_of_file")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
-	ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+	// ictx = icontext.New(ctx).(icontext.Icontext)
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
@@ -288,7 +288,7 @@ func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 			ictx.Set(sys_key.EOF, tt.eofValue)
 			ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
-			ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+			// ictx = icontext.New(ctx).(icontext.Icontext)
 
 			baseEndpoint := func(ctx context.Context, req any) (any, error) {
 				return "success", nil
@@ -353,7 +353,7 @@ func TestMiddleware_ConnectionCloseError(t *testing.T) {
 	ictx.Set(sys_key.EOF, "true")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
-	ctx = context.WithValue(context.Background(), sys_key.GOKRT_CONTEXT, ictx)
+	// ictx = icontext.New(ctx).(icontext.Icontext)
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		return "success", nil
