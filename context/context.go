@@ -70,8 +70,8 @@ func (c *ContextWithDeadline) Err() error {
 }
 
 func (c *ContextWithDeadline) WithoutDeadline(ctx context.Context) IContext {
-	if _, ok := ctx.(*ContextWithoutDeadline); ok {
-		return c
+	if current, ok := ctx.(*ContextWithoutDeadline); ok {
+		return current
 	}
 	return NewContextWithoutDeadline(c.base, c.properties)
 }
