@@ -7,7 +7,6 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	icontext "github.com/louvri/gokrt/context"
 	RUN_WITH_OPTION "github.com/louvri/gokrt/option"
-	"github.com/louvri/gokrt/sys_key"
 )
 
 func Middleware(
@@ -17,11 +16,11 @@ func Middleware(
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx icontext.Context
-			if tmp, ok := ctx.(icontext.Context); ok {
+			var ictx *icontext.Context
+			if tmp, ok := ctx.(*icontext.Context); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(icontext.Context)
+				ictx = icontext.New(ctx).(*icontext.Context)
 			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
@@ -41,8 +40,7 @@ func Middleware(
 						wg.Add(1)
 						go func() {
 							defer wg.Done()
-							ictx.Set(sys_key.DETACH_DEADLINE, true)
-							e(ictx, result)
+							e(ictx.WithoutDeadline(), result)
 							if postprocessor != nil {
 								postprocessor(resp, err)
 							}
@@ -50,8 +48,7 @@ func Middleware(
 						wg.Wait()
 					} else {
 						go func() {
-							ictx.Set(sys_key.DETACH_DEADLINE, true)
-							e(ictx, result)
+							e(ictx.WithoutDeadline(), result)
 							if postprocessor != nil {
 								postprocessor(resp, err)
 							}

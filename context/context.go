@@ -7,33 +7,25 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-type Context interface {
-	Deadline() (time.Time, bool)
-	Done() <-chan struct{}
-	Value(key any) any
-	Err() error
-	Get(key sys_key.SysKey) any
-	Set(key, value any)
-}
-type icontext struct {
+type Context struct {
 	base       context.Context
 	properties map[sys_key.SysKey]any
 }
 
-func New(ctx context.Context) context.Context {
-	if _, ok := ctx.(*icontext); ok {
+func New(ctx context.Context) any {
+	if _, ok := ctx.(*Context); ok {
 		return ctx
 	} else {
 		return Hijack(ctx)
 	}
 }
 
-func Hijack(ctx context.Context) Context {
-	var base *icontext
-	if tmp, ok := ctx.(*icontext); ok {
+func Hijack(ctx context.Context) *Context {
+	var base *Context
+	if tmp, ok := ctx.(*Context); ok {
 		base = tmp
 	} else {
-		base = &icontext{
+		base = &Context{
 			base: ctx,
 			properties: map[sys_key.SysKey]any{
 				sys_key.FILE_KEY:        ctx.Value(sys_key.FILE_KEY),
@@ -49,7 +41,7 @@ func Hijack(ctx context.Context) Context {
 
 }
 
-func (c *icontext) Get(key sys_key.SysKey) any {
+func (c *Context) Get(key sys_key.SysKey) any {
 	switch key {
 	case sys_key.FILE_KEY:
 		return c.properties[sys_key.FILE_KEY]
@@ -65,14 +57,12 @@ func (c *icontext) Get(key sys_key.SysKey) any {
 		return c.properties[sys_key.CACHE_KEY]
 	case sys_key.GOKRT_CONTEXT:
 		return c.properties[sys_key.GOKRT_CONTEXT]
-	case sys_key.DETACH_DEADLINE:
-		return c.properties[sys_key.DETACH_DEADLINE]
 	default:
 		return c.base.Value(key)
 	}
 }
 
-func (c *icontext) Set(key, value any) {
+func (c *Context) Set(key, value any) {
 	switch key {
 	case sys_key.FILE_KEY:
 		c.properties[sys_key.FILE_KEY] = value
@@ -88,8 +78,6 @@ func (c *icontext) Set(key, value any) {
 		c.properties[sys_key.CACHE_KEY] = value
 	case sys_key.GOKRT_CONTEXT:
 		c.properties[sys_key.GOKRT_CONTEXT] = value
-	case sys_key.DETACH_DEADLINE:
-		c.properties[sys_key.DETACH_DEADLINE] = value
 	default:
 		ctx := c.base
 		ctx = context.WithValue(ctx, key, value)
@@ -98,36 +86,38 @@ func (c *icontext) Set(key, value any) {
 }
 
 // override
-func (c *icontext) Deadline() (time.Time, bool) {
-	if detachDeadline, ok := c.properties[sys_key.DETACH_DEADLINE].(bool); ok && detachDeadline {
-		return time.Time{}, false
-	}
+func (c *Context) Deadline() (time.Time, bool) {
 	return c.base.Deadline()
 }
 
-func (c *icontext) Done() <-chan struct{} {
-	if detachDeadline, ok := c.properties[sys_key.DETACH_DEADLINE].(bool); ok && detachDeadline {
-		return nil
-	}
-	return c.base.Done()
-}
+func (c *Context) Done() <-chan struct{} { return c.base.Done() }
 
-func (c *icontext) Value(key any) any {
+func (c *Context) Value(key any) any {
 	return c.base.Value(key)
 }
 
-func (c *icontext) Err() error {
-	if detachDeadline, ok := c.properties[sys_key.DETACH_DEADLINE].(bool); ok && detachDeadline {
-		return c.base.Err()
-	}
+func (c *Context) Err() error {
 	return c.base.Err()
 }
 
-// func (c *Context) WithoutDeadline() context.Context {
+func (c *Context) WithoutDeadline() context.Context {
+	// Unwrap to get the actual base
+	baseCtx := c.base
+	if _, ok := baseCtx.(*ContextWithoutDeadline); ok {
+		return c
+	}
 
-// 	if _, hasDeadline := c.base.Deadline(); !hasDeadline {
-// 		return c
-// 	}
-// 	c.base = NewContextWithoutDeadline(c.base)
-// 	return c
-// }
+	if _, hasDeadline := baseCtx.Deadline(); !hasDeadline {
+		return c
+	}
+	newCtx := &Context{
+		base:       NewContextWithoutDeadline(baseCtx),
+		properties: make(map[sys_key.SysKey]any, len(c.properties)),
+	}
+
+	for k, v := range c.properties {
+		newCtx.properties[k] = v
+	}
+
+	return newCtx
+}
