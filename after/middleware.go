@@ -16,8 +16,8 @@ func Middleware(
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx icontext.Icontext
-			if tmp, ok := ctx.(icontext.Icontext); ok {
+			var ictx icontext.IContext
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
 				ictx = icontext.New(ctx)

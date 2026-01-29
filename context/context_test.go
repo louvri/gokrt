@@ -253,7 +253,7 @@ func TestNestedContextWithoutDeadline(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(20 * time.Second)
+			time.Sleep(3 * time.Second)
 			var queryable *gosl.Queryable
 			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
 			if ok {
@@ -284,7 +284,7 @@ func TestNestedContextWithoutDeadline(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(20 * time.Second)
+			time.Sleep(3 * time.Second)
 			var queryable *gosl.Queryable
 			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
 			if ok {
@@ -379,7 +379,7 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 		2*time.Minute,
 	))
 
-	baseCtx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	baseCtx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
 	baseCtx = context.WithValue(baseCtx, gosl.SQL_KEY, con)
 	defer cancel()
 
@@ -393,7 +393,7 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(1 * time.Second)
+			time.Sleep(2 * time.Second)
 			ctx, kit := gosl.New(ctx)
 			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 				var queryable *gosl.Queryable
@@ -432,7 +432,7 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(5 * time.Second)
+			time.Sleep(2 * time.Second)
 			ctx, kit := gosl.New(ctx)
 			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
 				var queryable *gosl.Queryable

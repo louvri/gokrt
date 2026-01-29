@@ -13,9 +13,9 @@ import (
 func Middleware(multipart *multipart.FileHeader) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx icontext.Icontext
+			var ictx icontext.IContext
 
-			if tmp, ok := ctx.(icontext.Icontext); ok {
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
 				ictx = icontext.New(ctx)

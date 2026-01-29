@@ -12,9 +12,9 @@ import (
 func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.Endpoint, preprocessor func(data any, err error) any, wait ...bool) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx icontext.Icontext
+			var ictx icontext.IContext
 
-			if tmp, ok := ctx.(icontext.Icontext); ok {
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
 				ictx = icontext.New(ctx)

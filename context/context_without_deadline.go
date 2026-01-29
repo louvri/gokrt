@@ -50,6 +50,6 @@ func (c *ContextWithoutDeadline) Err() error {
 	return nil
 }
 
-func (c *ContextWithoutDeadline) WithoutDeadline() Icontext {
+func (c *ContextWithoutDeadline) WithoutDeadline() IContext {
 	return c
 }

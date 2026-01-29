@@ -24,9 +24,9 @@ func Middleware(
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
-			var ictx icontext.Icontext
+			var ictx icontext.IContext
 
-			if tmp, ok := ctx.(icontext.Icontext); ok {
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
 				ictx = icontext.New(ctx)
@@ -48,7 +48,7 @@ func Middleware(
 					curr = response
 					if err != nil {
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							if ictx, ok = ctx.(icontext.Icontext); ok {
+							if ictx, ok = ctx.(icontext.IContext); ok {
 								ictx.Set(sys_key.EOF, "err")
 								response, _ = next(ictx, nil)
 							}
@@ -103,7 +103,7 @@ func Middleware(
 						}
 						idx++
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							if ictx, ok = ctx.(icontext.Icontext); ok {
+							if ictx, ok = ctx.(icontext.IContext); ok {
 								ictx.Set(sys_key.SOF, false)
 							}
 						}

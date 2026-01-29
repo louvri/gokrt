@@ -7,7 +7,7 @@ import (
 	"github.com/louvri/gokrt/sys_key"
 )
 
-type Icontext interface {
+type IContext interface {
 	context.Context
 	Get(key sys_key.SysKey) any
 	Set(key, value any)
@@ -16,5 +16,5 @@ type Icontext interface {
 	Done() <-chan struct{}
 	Value(key any) any
 	Err() error
-	WithoutDeadline() Icontext
+	WithoutDeadline() IContext
 }

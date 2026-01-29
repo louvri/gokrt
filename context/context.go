@@ -16,7 +16,7 @@ type ContextWithDeadline struct {
 	properties Property
 }
 
-func New(ctx context.Context) Icontext {
+func New(ctx context.Context) IContext {
 	if c, ok := ctx.(*ContextWithDeadline); ok {
 		return c
 	} else {
@@ -69,7 +69,10 @@ func (c *ContextWithDeadline) Err() error {
 	return c.base.Err()
 }
 
-func (c *ContextWithDeadline) WithoutDeadline() Icontext {
+func (c *ContextWithDeadline) WithoutDeadline() IContext {
+	if _, hasDeadline := c.base.Deadline(); !hasDeadline {
+		return c
+	}
 	return NewContextWithoutDeadline(c.base, c.properties)
 }
 
