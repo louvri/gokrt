@@ -16,11 +16,11 @@ func Middleware(
 	opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx *icontext.Context
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			var ictx icontext.IContext
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
@@ -38,7 +38,7 @@ func Middleware(
 					wg.Add(1)
 					go func() {
 						defer wg.Done()
-						postdata, err := e(ictx.WithoutDeadline(), result)
+						postdata, err := e(ictx.WithoutDeadline(ictx), result)
 						if postprocessor != nil {
 							postprocessor(postdata, err)
 						}
@@ -46,7 +46,7 @@ func Middleware(
 					wg.Wait()
 				} else {
 					go func() {
-						postdata, err := e(ictx.WithoutDeadline(), result)
+						postdata, err := e(ictx.WithoutDeadline(ictx), result)
 						if postprocessor != nil {
 							postprocessor(postdata, err)
 						}

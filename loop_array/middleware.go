@@ -15,12 +15,12 @@ import (
 func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any, postprocessor func(original, data any, err error), opts ...RUN_WITH_OPTION.Option) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx *icontext.Context
+			var ictx icontext.IContext
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			errorCollection := make([]map[string]any, 0)
 			opt := make(map[RUN_WITH_OPTION.Option]bool)

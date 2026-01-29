@@ -9,3 +9,4 @@ const EOF SysKey = 1992
 const DATA_REF SysKey = 1993
 const CACHE_KEY SysKey = 1995
 const GOKRT_CONTEXT SysKey = 1996
+const DETACH_DEADLINE = 1999

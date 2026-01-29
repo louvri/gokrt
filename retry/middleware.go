@@ -21,12 +21,12 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 			Max: 50,
 		})
 		return func(ctx context.Context, request any) (any, error) {
-			var ictx *icontext.Context
+			var ictx icontext.IContext
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			response, ierr := next(ictx, request)
 			if ierr != nil && ierr.Error() == onErrorMessage {
@@ -55,7 +55,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 					if callback != nil {
 						callback(id, converted, timestamp)
 					}
-					_, err := retry(ictx.WithoutDeadline(), converted["request"])
+					_, err := retry(ictx.WithoutDeadline(ictx), converted["request"])
 					if err != nil {
 						if cnt, ok := converted["counter"].(int); ok && cnt < numberOfRetries {
 							converted["counter"] = cnt + 1

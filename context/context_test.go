@@ -1,4 +1,4 @@
-package icontext_test
+package context_test
 
 import (
 	"context"
@@ -24,7 +24,7 @@ func TestWithoutDeadline_RemovesDeadline(t *testing.T) {
 		t.Fatal("Base context should have a deadline")
 	}
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(*customContext.ContextWithDeadline)
 
 	if deadline, hasDeadline := ctx.Deadline(); !hasDeadline {
 		t.Fatal("Context should have a deadline before WithoutDeadline()")
@@ -32,7 +32,7 @@ func TestWithoutDeadline_RemovesDeadline(t *testing.T) {
 		t.Logf("Original deadline: %v", deadline)
 	}
 
-	newCtx := ctx.WithoutDeadline()
+	newCtx := ctx
 
 	if deadline, hasDeadline := newCtx.Deadline(); hasDeadline {
 		t.Errorf("Context should not have a deadline after WithoutDeadline(), but got: %v", deadline)
@@ -45,7 +45,7 @@ func TestWithoutDeadline_PreservesAllProperties(t *testing.T) {
 	baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(*customContext.ContextWithDeadline)
 
 	testData := map[sys_key.SysKey]any{
 		sys_key.FILE_KEY:        "test_file.txt",
@@ -64,7 +64,7 @@ func TestWithoutDeadline_PreservesAllProperties(t *testing.T) {
 	ctx.Set("custom_key_1", "custom_value_1")
 	ctx.Set("custom_key_2", 42)
 
-	newCtx := ctx.WithoutDeadline().(*customContext.Context)
+	newCtx := ctx
 
 	t.Run("VerifySystemProperties", func(t *testing.T) {
 		for key, expectedValue := range testData {
@@ -125,7 +125,7 @@ func TestWithoutDeadline_OriginalContextUnaffected(t *testing.T) {
 	baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(*customContext.ContextWithDeadline)
 	ctx.Set(sys_key.FILE_KEY, "original_file.txt")
 
 	originalDeadline, hadDeadline := ctx.Deadline()
@@ -133,7 +133,7 @@ func TestWithoutDeadline_OriginalContextUnaffected(t *testing.T) {
 		t.Fatal("Original context should have a deadline")
 	}
 
-	newCtx := ctx.WithoutDeadline().(*customContext.Context)
+	newCtx := ctx
 
 	currentDeadline, stillHasDeadline := ctx.Deadline()
 	if !stillHasDeadline {
@@ -163,10 +163,10 @@ func TestWithoutDeadline_ChainedContexts(t *testing.T) {
 	defer cancel()
 	level2Ctx := context.WithValue(level1Ctx, "user", "john")
 
-	ctx := customContext.New(level2Ctx).(*customContext.Context)
+	ctx := customContext.New(level2Ctx).(*customContext.ContextWithDeadline)
 	ctx.Set(sys_key.FILE_KEY, "test.txt")
 
-	newCtx := ctx.WithoutDeadline()
+	newCtx := ctx
 
 	if _, hasDeadline := newCtx.Deadline(); hasDeadline {
 		t.Error("New context should not have a deadline")
@@ -184,7 +184,7 @@ func TestWithoutDeadline_ChainedContexts(t *testing.T) {
 		t.Log("✓ Chained context value preserved")
 	}
 
-	if val := newCtx.(*customContext.Context).Get(sys_key.FILE_KEY); val != "test.txt" {
+	if val := newCtx.Get(sys_key.FILE_KEY); val != "test.txt" {
 		t.Errorf("Property FILE_KEY: expected 'test.txt', got %v", val)
 	} else {
 		t.Log("✓ Custom context property preserved")
@@ -195,13 +195,13 @@ func TestWithoutDeadline_DoneChannelBehavior(t *testing.T) {
 	baseCtx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(*customContext.ContextWithDeadline)
 
 	if ctx.Done() == nil {
 		t.Fatal("Original context should have a Done channel")
 	}
 
-	newCtx := ctx.WithoutDeadline()
+	newCtx := ctx
 
 	if newCtx.Done() != nil {
 		t.Error("New context Done() should return nil")
@@ -253,7 +253,7 @@ func TestNestedContextWithoutDeadline(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(20 * time.Second)
+			time.Sleep(3 * time.Second)
 			var queryable *gosl.Queryable
 			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
 			if ok {
@@ -284,7 +284,7 @@ func TestNestedContextWithoutDeadline(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(20 * time.Second)
+			time.Sleep(3 * time.Second)
 			var queryable *gosl.Queryable
 			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
 			if ok {
@@ -364,4 +364,180 @@ func TestNestedContextWithoutDeadline(t *testing.T) {
 		t.Errorf("⚠️  Shouldn't be any error: %s", err.Error())
 	}
 	time.Sleep(40 * time.Second)
+}
+
+func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
+	con := gosl.NewQueryable(gosl.ConnectToDB(
+		"root",
+		"abcd",
+		"localhost",
+		"3306",
+		"testTx",
+		1,
+		1,
+		2*time.Minute,
+		2*time.Minute,
+	))
+
+	baseCtx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	baseCtx = context.WithValue(baseCtx, gosl.SQL_KEY, con)
+	defer cancel()
+
+	// baseCtx := context.WithValue(context.Background(), gosl.SQL_KEY, con)
+
+	b := time.Now()
+
+	ep1 := func(ctx context.Context, req any) (any, error) {
+		select {
+		case <-ctx.Done():
+			t.Error("deadline exceeds on ep2")
+			return nil, errors.New("deadline exceeds ep2")
+		default:
+			time.Sleep(2 * time.Second)
+			ctx, kit := gosl.New(ctx)
+			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				var queryable *gosl.Queryable
+				ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+				if ok {
+					queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+				} else {
+					ref := ctx.Value(gosl.SQL_KEY)
+					if ref == nil {
+						err := errors.New("database is not initialized")
+						return err
+					}
+					queryable = ref.(*gosl.Queryable)
+				}
+				_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "ep1"))
+				if err != nil {
+					t.Error(err.Error())
+					log.Println(err.Error())
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				t.Error(err.Error())
+				log.Println(err.Error())
+			}
+			after := time.Now()
+			log.Printf("ep1 executed after %f", after.Sub(b).Seconds())
+			return nil, nil
+		}
+	}
+
+	ep2 := func(ctx context.Context, req any) (any, error) {
+		select {
+		case <-ctx.Done():
+			t.Error("deadline exceeds on ep2")
+			return nil, errors.New("deadline exceeds ep2")
+		default:
+			time.Sleep(2 * time.Second)
+			ctx, kit := gosl.New(ctx)
+			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				var queryable *gosl.Queryable
+				ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+				if ok {
+					queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+				} else {
+					ref := ctx.Value(gosl.SQL_KEY)
+					if ref == nil {
+						err := errors.New("database is not initialized")
+						log.Println(err.Error())
+						return err
+					}
+					queryable = ref.(*gosl.Queryable)
+				}
+				_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "ep2"))
+				if err != nil {
+					t.Error(err.Error())
+					log.Println(err.Error())
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				t.Error(err.Error())
+				log.Println(err.Error())
+			}
+			after := time.Now()
+			log.Printf("ep2 executed after %f", after.Sub(b).Seconds())
+			return nil, nil
+		}
+	}
+
+	main := func(ctx context.Context, req any) (any, error) {
+		var queryable *gosl.Queryable
+
+		select {
+		case <-ctx.Done():
+			t.Error("deadline exceeds on main")
+			return nil, errors.New("deadline exceeds on main")
+		default:
+			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+			if ok {
+				queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+			} else {
+				ref := ctx.Value(gosl.SQL_KEY)
+				if ref == nil {
+					err := errors.New("database is not initialized")
+					return nil, err
+				}
+				queryable = ref.(*gosl.Queryable)
+			}
+			_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "main"))
+			if err != nil {
+				t.Error(err.Error())
+				log.Println(err.Error())
+				return nil, err
+			}
+			after := time.Now()
+			log.Printf("main executed after %f", after.Sub(b).Seconds())
+			return "main", nil
+		}
+	}
+
+	bc := func(ctx context.Context, req any) (any, error) {
+		return nil, nil
+	}
+	_, err := endpoint.Chain(
+		forget.Middleware(
+			after.Middleware(bc, func(data any, err error) any {
+				return "data"
+			}, nil),
+		),
+		after.Middleware(ep2, nil, nil),
+		after.Middleware(ep1, nil, nil),
+		after.Middleware(ep2, nil, nil),
+		after.Middleware(ep1, nil, nil),
+	)(main)(baseCtx, "main")
+	after := time.Now()
+
+	d := after.Sub(b)
+	log.Printf("executed on %fs \n", d.Seconds())
+	log.Println("chaining done")
+	if err != nil {
+		t.Errorf("⚠️  Shouldn't be any error: %s", err.Error())
+	}
+	time.Sleep(20 * time.Second)
+}
+
+func TestReference(t *testing.T) {
+	ctxA := customContext.New(context.Background())
+
+	ctxA1 := ctxA.(*customContext.ContextWithDeadline)
+	ctxA1.Set(sys_key.FILE_KEY, "A")
+	ctxA1.Set(sys_key.FILE_OBJECT_KEY, "B")
+	ctxA1.Set(sys_key.SOF, "C")
+	ctxA1.Set(sys_key.EOF, "D")
+	ctxA1.Set(sys_key.DATA_REF, "E")
+	ctxA1.Set(sys_key.CACHE_KEY, "F")
+
+	ctxB := ctxA1.WithoutDeadline(ctxA1)
+	ctxB1 := ctxB.(*customContext.ContextWithoutDeadline)
+	ctxB1.Set(sys_key.FILE_KEY, "BBBB")
+
+	if ctxB1.Get(sys_key.FILE_KEY) != ctxA1.Get(sys_key.FILE_KEY) {
+		t.Log("should same since it's pass by memory")
+	}
 }

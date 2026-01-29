@@ -14,12 +14,12 @@ import (
 func Middleware(key, field string, value, endstate any, duration time.Duration, redis *goRedis.Client) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx *icontext.Context
+			var ictx icontext.IContext
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			if value == nil {
 				cmd := redis.HDel(ictx, key, field)
@@ -45,9 +45,9 @@ func Middleware(key, field string, value, endstate any, duration time.Duration, 
 					return next(ctx, req)
 				}
 			}
-			redis.Expire(ictx.WithoutDeadline(), key, duration)
-			redis.HSet(ictx.WithoutDeadline(), key, field, value)
-			return next(ictx.WithoutDeadline(), req)
+			redis.Expire(ictx.WithoutDeadline(ictx), key, duration)
+			redis.HSet(ictx.WithoutDeadline(ictx), key, field, value)
+			return next(ictx.WithoutDeadline(ictx), req)
 		}
 	}
 }

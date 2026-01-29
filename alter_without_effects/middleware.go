@@ -11,11 +11,11 @@ func Middleware(postprocessor func(original, data any, err error) (any, error), 
 
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx *icontext.Context
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			var ictx icontext.IContext
+			if tmp, ok := ctx.(icontext.IContext); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx)
 			}
 			for i := len(middlewares) - 1; i >= 0; i-- {
 				next = middlewares[i](next)
