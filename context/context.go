@@ -101,23 +101,10 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) WithoutDeadline() context.Context {
-	// Unwrap to get the actual base
-	baseCtx := c.base
-	if _, ok := baseCtx.(*ContextWithoutDeadline); ok {
+
+	if _, hasDeadline := c.base.Deadline(); !hasDeadline {
 		return c
 	}
-
-	if _, hasDeadline := baseCtx.Deadline(); !hasDeadline {
-		return c
-	}
-	newCtx := &Context{
-		base:       NewContextWithoutDeadline(baseCtx),
-		properties: make(map[sys_key.SysKey]any, len(c.properties)),
-	}
-
-	for k, v := range c.properties {
-		newCtx.properties[k] = v
-	}
-
-	return newCtx
+	c.base = NewContextWithoutDeadline(c.base)
+	return c
 }

@@ -379,7 +379,7 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 		2*time.Minute,
 	))
 
-	baseCtx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	baseCtx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	baseCtx = context.WithValue(baseCtx, gosl.SQL_KEY, con)
 	defer cancel()
 
@@ -393,22 +393,21 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(5 * time.Second)
-			var queryable *gosl.Queryable
-			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
-			if ok {
-				queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
-			} else {
-				ref := ctx.Value(gosl.SQL_KEY)
-				if ref == nil {
-					err := errors.New("database is not initialized")
-					return nil, err
-				}
-				queryable = ref.(*gosl.Queryable)
-			}
-
+			time.Sleep(2 * time.Second)
 			ctx, kit := gosl.New(ctx)
 			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				var queryable *gosl.Queryable
+				ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+				if ok {
+					queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+				} else {
+					ref := ctx.Value(gosl.SQL_KEY)
+					if ref == nil {
+						err := errors.New("database is not initialized")
+						return err
+					}
+					queryable = ref.(*gosl.Queryable)
+				}
 				_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "ep1"))
 				if err != nil {
 					t.Error(err.Error())
@@ -433,22 +432,22 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 			t.Error("deadline exceeds on ep2")
 			return nil, errors.New("deadline exceeds ep2")
 		default:
-			time.Sleep(5 * time.Second)
-			var queryable *gosl.Queryable
-			ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
-			if ok {
-				queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
-			} else {
-				ref := ctx.Value(gosl.SQL_KEY)
-				if ref == nil {
-					err := errors.New("database is not initialized")
-					log.Println(err.Error())
-					return nil, err
-				}
-				queryable = ref.(*gosl.Queryable)
-			}
-			_, kit := gosl.New(ctx)
+			time.Sleep(2 * time.Second)
+			ctx, kit := gosl.New(ctx)
 			err := kit.RunInTransaction(ctx, func(ctx context.Context) error {
+				var queryable *gosl.Queryable
+				ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+				if ok {
+					queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+				} else {
+					ref := ctx.Value(gosl.SQL_KEY)
+					if ref == nil {
+						err := errors.New("database is not initialized")
+						log.Println(err.Error())
+						return err
+					}
+					queryable = ref.(*gosl.Queryable)
+				}
 				_, err := queryable.ExecContext(ctx, fmt.Sprintf("INSERT INTO `hello_1` (data) VALUES('%s')", "ep2"))
 				if err != nil {
 					t.Error(err.Error())
@@ -520,5 +519,5 @@ func TestNestedContextWithoutDeadlineTransaction(t *testing.T) {
 	if err != nil {
 		t.Errorf("⚠️  Shouldn't be any error: %s", err.Error())
 	}
-	time.Sleep(60 * time.Second)
+	time.Sleep(20 * time.Second)
 }
