@@ -11,27 +11,27 @@ var (
 	Ictx interface{}
 )
 
-type Context struct {
+type ContextWithDeadline struct {
 	base       context.Context
 	properties Property
 }
 
 func New(ctx context.Context) Icontext {
-	if c, ok := ctx.(*Context); ok {
+	if c, ok := ctx.(*ContextWithDeadline); ok {
 		return c
 	} else {
 		return Hijack(ctx)
 	}
 }
 
-func Hijack(ctx context.Context) *Context {
-	var base *Context
+func Hijack(ctx context.Context) *ContextWithDeadline {
+	var base *ContextWithDeadline
 	var properties Property
 	properties = InitiateProperty(ctx)
-	if tmp, ok := ctx.(*Context); ok {
+	if tmp, ok := ctx.(*ContextWithDeadline); ok {
 		base = tmp
 	} else {
-		base = &Context{
+		base = &ContextWithDeadline{
 			base:       ctx,
 			properties: properties,
 		}
@@ -40,11 +40,11 @@ func Hijack(ctx context.Context) *Context {
 
 }
 
-func (c *Context) Get(key sys_key.SysKey) any {
+func (c *ContextWithDeadline) Get(key sys_key.SysKey) any {
 	return c.properties.Get(key)
 }
 
-func (c *Context) Set(key, value any) {
+func (c *ContextWithDeadline) Set(key, value any) {
 	if _, ok := key.(sys_key.SysKey); ok {
 		c.properties.Set(key, value)
 	} else {
@@ -55,24 +55,24 @@ func (c *Context) Set(key, value any) {
 }
 
 // override
-func (c *Context) Deadline() (time.Time, bool) {
+func (c *ContextWithDeadline) Deadline() (time.Time, bool) {
 	return c.base.Deadline()
 }
 
-func (c *Context) Done() <-chan struct{} { return c.base.Done() }
+func (c *ContextWithDeadline) Done() <-chan struct{} { return c.base.Done() }
 
-func (c *Context) Value(key any) any {
+func (c *ContextWithDeadline) Value(key any) any {
 	return c.base.Value(key)
 }
 
-func (c *Context) Err() error {
+func (c *ContextWithDeadline) Err() error {
 	return c.base.Err()
 }
 
-func (c *Context) WithoutDeadline() Icontext {
+func (c *ContextWithDeadline) WithoutDeadline() Icontext {
 	return NewContextWithoutDeadline(c.base, c.properties)
 }
 
-func (c *Context) Base() context.Context {
+func (c *ContextWithDeadline) Base() context.Context {
 	return c.base
 }

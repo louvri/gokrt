@@ -48,7 +48,7 @@ func Middleware(
 					curr = response
 					if err != nil {
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							if ictx, ok = ctx.(*icontext.Context); ok {
+							if ictx, ok = ctx.(icontext.Icontext); ok {
 								ictx.Set(sys_key.EOF, "err")
 								response, _ = next(ictx, nil)
 							}
@@ -103,7 +103,7 @@ func Middleware(
 						}
 						idx++
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							if ictx, ok = ctx.(*icontext.Context); ok {
+							if ictx, ok = ctx.(icontext.Icontext); ok {
 								ictx.Set(sys_key.SOF, false)
 							}
 						}

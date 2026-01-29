@@ -48,7 +48,7 @@ func TestMiddleware_WithEOF(t *testing.T) {
 	}
 
 	ctx := icontext.New(context.Background())
-	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 	ictx.Set(sys_key.EOF, "true")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
@@ -88,7 +88,7 @@ func TestMiddleware_WithoutEOF(t *testing.T) {
 	}
 
 	ctx := icontext.New(context.Background())
-	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 	ictx.Set(sys_key.EOF, "") // No EOF set
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
@@ -119,7 +119,7 @@ func TestMiddleware_WithoutInternalContext(t *testing.T) {
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		// Verify internal context was created
-		ictx, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+		ictx, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 		assert.True(t, ok)
 		assert.NotNil(t, ictx)
 		return "success", nil
@@ -142,7 +142,7 @@ func TestMiddleware_WithInvalidInternalContext(t *testing.T) {
 
 	baseEndpoint := func(ctx context.Context, req any) (any, error) {
 		// Verify new internal context was created
-		ictx, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+		ictx, ok := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 		assert.True(t, ok)
 		assert.NotNil(t, ictx)
 		return "success", nil
@@ -162,7 +162,7 @@ func TestMiddleware_WithInvalidInternalContext(t *testing.T) {
 func TestMiddleware_WithoutFileObjects(t *testing.T) {
 	// Arrange
 	ctx := icontext.New(context.Background())
-	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 	ictx.Set(sys_key.EOF, "true")
 	// No FILE_OBJECT_KEY set
 
@@ -187,7 +187,7 @@ func TestMiddleware_WithoutFileObjects(t *testing.T) {
 func TestMiddleware_WithInvalidFileObjects(t *testing.T) {
 	// Arrange
 	ctx := icontext.New(context.Background())
-	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 	ictx.Set(sys_key.EOF, "true")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, "invalid_file_objects") // Not a map
 
@@ -226,7 +226,7 @@ func TestMiddleware_MixedConnectionTypes(t *testing.T) {
 	}
 
 	ctx := icontext.New(context.Background())
-	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 	ictx.Set(sys_key.EOF, "end_of_file")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
@@ -284,7 +284,7 @@ func TestMiddleware_EOFWithDifferentValues(t *testing.T) {
 			}
 
 			ctx := icontext.New(context.Background())
-			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+			ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 			ictx.Set(sys_key.EOF, tt.eofValue)
 			ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
@@ -349,7 +349,7 @@ func TestMiddleware_ConnectionCloseError(t *testing.T) {
 	}
 
 	ctx := icontext.New(context.Background())
-	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.Context)
+	ictx, _ := ctx.Value(sys_key.GOKRT_CONTEXT).(*icontext.ContextWithDeadline)
 	ictx.Set(sys_key.EOF, "true")
 	ictx.Set(sys_key.FILE_OBJECT_KEY, fileObjects)
 
