@@ -24,12 +24,12 @@ func Middleware(
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
 			var ok bool
-			var ictx *icontext.Context
+			var ictx icontext.Context
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.Context); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx).(icontext.Context)
 			}
 			opt := make(map[RUN_WITH_OPTION.Option]bool)
 			for _, option := range opts {
@@ -48,7 +48,7 @@ func Middleware(
 					curr = response
 					if err != nil {
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							if ictx, ok = ctx.(*icontext.Context); ok {
+							if ictx, ok = ctx.(icontext.Context); ok {
 								ictx.Set(sys_key.EOF, "err")
 								response, _ = next(ictx, nil)
 							}
@@ -103,7 +103,7 @@ func Middleware(
 						}
 						idx++
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
-							if ictx, ok = ctx.(*icontext.Context); ok {
+							if ictx, ok = ctx.(icontext.Context); ok {
 								ictx.Set(sys_key.SOF, false)
 							}
 						}

@@ -21,12 +21,12 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 			Max: 50,
 		})
 		return func(ctx context.Context, request any) (any, error) {
-			var ictx *icontext.Context
+			var ictx icontext.Context
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.Context); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx).(icontext.Context)
 			}
 			response, ierr := next(ictx, request)
 			if ierr != nil && ierr.Error() == onErrorMessage {

@@ -24,7 +24,7 @@ func TestWithoutDeadline_RemovesDeadline(t *testing.T) {
 		t.Fatal("Base context should have a deadline")
 	}
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(customContext.Context)
 
 	if deadline, hasDeadline := ctx.Deadline(); !hasDeadline {
 		t.Fatal("Context should have a deadline before WithoutDeadline()")
@@ -45,7 +45,7 @@ func TestWithoutDeadline_PreservesAllProperties(t *testing.T) {
 	baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(customContext.Context)
 
 	testData := map[sys_key.SysKey]any{
 		sys_key.FILE_KEY:        "test_file.txt",
@@ -125,7 +125,7 @@ func TestWithoutDeadline_OriginalContextUnaffected(t *testing.T) {
 	baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(customContext.Context)
 	ctx.Set(sys_key.FILE_KEY, "original_file.txt")
 
 	originalDeadline, hadDeadline := ctx.Deadline()
@@ -163,7 +163,7 @@ func TestWithoutDeadline_ChainedContexts(t *testing.T) {
 	defer cancel()
 	level2Ctx := context.WithValue(level1Ctx, "user", "john")
 
-	ctx := customContext.New(level2Ctx).(*customContext.Context)
+	ctx := customContext.New(level2Ctx).(customContext.Context)
 	ctx.Set(sys_key.FILE_KEY, "test.txt")
 
 	newCtx := ctx
@@ -195,7 +195,7 @@ func TestWithoutDeadline_DoneChannelBehavior(t *testing.T) {
 	baseCtx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	ctx := customContext.New(baseCtx).(*customContext.Context)
+	ctx := customContext.New(baseCtx).(customContext.Context)
 
 	if ctx.Done() == nil {
 		t.Fatal("Original context should have a Done channel")

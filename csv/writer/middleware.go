@@ -17,12 +17,12 @@ import (
 func Middleware(filename string, columns []string, cancelOnError bool, splitter ...string) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req any) (any, error) {
-			var ictx *icontext.Context
+			var ictx icontext.Context
 
-			if tmp, ok := ctx.(*icontext.Context); ok {
+			if tmp, ok := ctx.(icontext.Context); ok {
 				ictx = tmp
 			} else {
-				ictx = icontext.New(ctx).(*icontext.Context)
+				ictx = icontext.New(ctx).(icontext.Context)
 			}
 			splitterRune := ';'
 			if len(splitter) > 0 && splitter[0] != "" {
