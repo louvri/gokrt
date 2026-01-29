@@ -70,9 +70,6 @@ func (c *ContextWithDeadline) Err() error {
 }
 
 func (c *ContextWithDeadline) WithoutDeadline() IContext {
-	if _, hasDeadline := c.base.Deadline(); !hasDeadline {
-		return c
-	}
 	return NewContextWithoutDeadline(c.base, c.properties)
 }
 
