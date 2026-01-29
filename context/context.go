@@ -69,7 +69,10 @@ func (c *ContextWithDeadline) Err() error {
 	return c.base.Err()
 }
 
-func (c *ContextWithDeadline) WithoutDeadline() IContext {
+func (c *ContextWithDeadline) WithoutDeadline(ctx context.Context) IContext {
+	if _, ok := ctx.(*ContextWithoutDeadline); ok {
+		return c
+	}
 	return NewContextWithoutDeadline(c.base, c.properties)
 }
 

@@ -533,7 +533,7 @@ func TestReference(t *testing.T) {
 	ctxA1.Set(sys_key.DATA_REF, "E")
 	ctxA1.Set(sys_key.CACHE_KEY, "F")
 
-	ctxB := ctxA1.WithoutDeadline()
+	ctxB := ctxA1.WithoutDeadline(ctxA1)
 	ctxB1 := ctxB.(*customContext.ContextWithoutDeadline)
 	ctxB1.Set(sys_key.FILE_KEY, "BBBB")
 

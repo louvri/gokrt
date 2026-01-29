@@ -35,11 +35,11 @@ func Middleware(key, field string, value any, redis *goRedis.Client, e endpoint.
 							wg.Add(1)
 							go func() {
 								defer wg.Done()
-								e(ictx.WithoutDeadline(), result)
+								e(ictx.WithoutDeadline(ictx), result)
 							}()
 							wg.Wait()
 						} else {
-							go e(ictx.WithoutDeadline(), result)
+							go e(ictx.WithoutDeadline(ictx), result)
 						}
 					}
 				}

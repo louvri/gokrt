@@ -16,5 +16,5 @@ type IContext interface {
 	Done() <-chan struct{}
 	Value(key any) any
 	Err() error
-	WithoutDeadline() IContext
+	WithoutDeadline(ctx context.Context) IContext
 }

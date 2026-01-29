@@ -45,9 +45,9 @@ func Middleware(key, field string, value, endstate any, duration time.Duration, 
 					return next(ctx, req)
 				}
 			}
-			redis.Expire(ictx.WithoutDeadline(), key, duration)
-			redis.HSet(ictx.WithoutDeadline(), key, field, value)
-			return next(ictx.WithoutDeadline(), req)
+			redis.Expire(ictx.WithoutDeadline(ictx), key, duration)
+			redis.HSet(ictx.WithoutDeadline(ictx), key, field, value)
+			return next(ictx.WithoutDeadline(ictx), req)
 		}
 	}
 }
