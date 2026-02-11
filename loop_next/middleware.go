@@ -50,7 +50,7 @@ func Middleware(
 						if !opt[RUN_WITH_OPTION.RUN_WITHOUT_FILE_DESCRIPTOR] {
 							if ictx, ok = ctx.(icontext.IContext); ok {
 								ictx.Set(sys_key.EOF, "err")
-								response, _ = next(ictx.WithoutDeadline(ictx), nil)
+								response, _ = next(ictx, nil)
 							}
 						}
 						if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
