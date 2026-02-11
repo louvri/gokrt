@@ -8,9 +8,11 @@ import (
 	"log"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/jmoiron/sqlx"
+	"github.com/louvri/gokrt/after"
 	"github.com/louvri/gokrt/loop_array"
 	"github.com/louvri/gokrt/option"
 	"github.com/louvri/gosl"
@@ -22,6 +24,8 @@ type Mock interface {
 	Main(ctx context.Context, request any) (any, error)
 	Executor(ctx context.Context, request any) (any, error)
 	Insert(ctx context.Context, request any) (any, error)
+	Delayed(ctx context.Context, request any) (any, error)
+	MainNoErr(ctx context.Context, request any) (any, error)
 }
 
 type mock struct {
@@ -34,6 +38,11 @@ func NewMock(db *sqlx.DB) Mock {
 		logger: log.Default(),
 		db:     db,
 	}
+}
+
+func (m *mock) Delayed(ctx context.Context, request any) (any, error) {
+	time.Sleep(100 * time.Millisecond)
+	return request, nil
 }
 
 func (m *mock) Insert(ctx context.Context, request any) (any, error) {
@@ -71,6 +80,16 @@ func (m *mock) Main(ctx context.Context, request any) (any, error) {
 		"3rdIndex",
 		"4thIndex",
 		err,
+		"5thIndex",
+	}, nil
+}
+
+func (m *mock) MainNoErr(ctx context.Context, request any) (any, error) {
+	return []any{
+		"1stIndex",
+		"2ndIndex",
+		"3rdIndex",
+		"4thIndex",
 		"5thIndex",
 	}, nil
 }
@@ -260,5 +279,32 @@ func TestLoopRunWithError(t *testing.T) {
 			t.Log("error have one, as the pre test function declared sum of error")
 			t.FailNow()
 		}
+	}
+}
+
+func TestLoopArrayWitDelay(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	m := NewMock(nil)
+	_, r := endpoint.Chain(
+		loop_array.Middleware(
+			endpoint.Chain(
+				after.Middleware(m.Executor, func(data any, err error) any {
+					return data
+				}, nil),
+			)(m.Delayed), func(data any, err error) any {
+				return data
+			}, func(original, data any, err error) {
+
+			},
+		),
+	)(m.Main)(ctx, "execute")
+	if r != nil {
+		if strings.Contains(r.Error(), "context") {
+			t.Log("shouldn't be error context")
+			t.FailNow()
+		}
+		t.Log("shouldn't be error")
+		t.FailNow()
 	}
 }

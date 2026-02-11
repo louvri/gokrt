@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"time"
 )
 
 var Err = errors.New("error appear")
@@ -47,8 +46,6 @@ type Mock interface {
 	Executor(ctx context.Context, request any) (any, error)
 	GetCounter() int
 	Increment(int)
-	Delayed(ctx context.Context, request any) (any, error)
-	MainNoError(ctx context.Context, request any) (any, error)
 }
 
 type mock struct {
@@ -64,18 +61,6 @@ func NewMock() Mock {
 		}
 	}
 	return instance
-}
-
-func (m *mock) MainNoError(ctx context.Context, request any) (any, error) {
-
-	current := m.counter
-	if current >= len(NoErrBatch) {
-		return nil, nil
-	}
-	if err, ok := NoErrBatch[current].(error); ok {
-		return nil, err
-	}
-	return NoErrBatch[current], nil
 }
 
 func (m *mock) Main(ctx context.Context, request any) (any, error) {
@@ -113,9 +98,4 @@ func (m *mock) GetCounter() int {
 
 func (m *mock) Increment(x int) {
 	m.counter += x
-}
-
-func (m *mock) Delayed(ctx context.Context, request any) (any, error) {
-	time.Sleep(100 * time.Millisecond)
-	return request, nil
 }
