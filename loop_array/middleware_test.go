@@ -283,7 +283,7 @@ func TestLoopRunWithError(t *testing.T) {
 }
 
 func TestLoopArrayWitDelay(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
 	defer cancel()
 	m := NewMock(nil)
 	_, r := endpoint.Chain(
