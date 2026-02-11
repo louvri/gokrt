@@ -39,7 +39,7 @@ func Middleware(e endpoint.Endpoint, preprocessor func(data any, err error) any,
 						} else {
 							req = data
 						}
-						resp, err := e(ictx, req)
+						resp, err := e(ictx.WithoutDeadline(ictx), req)
 						if err != nil {
 							if !opt[RUN_WITH_OPTION.RUN_WITH_ERROR] {
 								return nil, err
