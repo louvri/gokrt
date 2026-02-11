@@ -169,3 +169,40 @@ func TestRunErrorTransaction(t *testing.T) {
 	}
 
 }
+
+func TestLoopNexDelayed(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	defer cancel()
+	m := mock.NewMock()
+	_, err := endpoint.Chain(
+		loop_next.Middleware(func(prev, curr any) bool {
+			comparator := len(mock.Err.Error()) <= m.GetCounter()
+			m.Increment(1)
+			return comparator
+		}, func(req, next any) any {
+			return tmpIndex
+		}, func(original, data any, err error) {
+			// no op
+		}),
+		after.Middleware(m.Executor, func(data any, err error) any {
+			if data != nil && err == nil {
+				return data
+			}
+			return err
+		}, nil),
+		after.Middleware(m.Delayed, func(data any, err error) any {
+			if data != nil && err == nil {
+				return data
+			}
+			return err
+		}, nil),
+	)(m.MainNoError)(ctx, tmpIndex)
+	if err != nil {
+		if strings.Contains(err.Error(), "context") {
+			t.Log("shouldn't be error context")
+			t.FailNow()
+		}
+		t.Log("shouldn't be error")
+		t.FailNow()
+	}
+}
