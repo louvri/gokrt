@@ -39,11 +39,9 @@ func Middleware(bucket, name, credential string, kind gcs.FileType) endpoint.Mid
 				switch kind {
 				case gcs.READER:
 					file[name] = con.Reader()
-					// ctx = context.WithValue(ctx, sys_key.FILE_KEY, file)
 					ictx.Set(sys_key.FILE_KEY, file)
 				case gcs.WRITER:
 					file[name] = con.Writer()
-					// ctx = context.WithValue(ctx, sys_key.FILE_KEY, file)
 					ictx.Set(sys_key.FILE_KEY, file)
 				}
 				var fileObject map[string]any
