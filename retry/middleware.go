@@ -13,8 +13,8 @@ import (
 
 func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorMessage string, callback func(id string, request any, timestamp string), middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		n := len(middlewares)
-		for i := n - 1; i >= 0; i-- {
+		n := len(middlewares) - 1
+		for i := n; i >= 0; i-- {
 			next = middlewares[i](next)
 		}
 		//intentionaly to skip the root call and go just run the middlewares
