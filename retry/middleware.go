@@ -13,15 +13,21 @@ import (
 
 func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorMessage string, callback func(id string, request any, timestamp string), middlewares ...endpoint.Middleware) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
-		wrapped := next
+		n := len(middlewares)
+		for i := n - 1; i >= 0; i-- {
+			next = middlewares[i](next)
+		}
 		//intentionaly to skip the root call and go just run the middlewares
-		for i := len(middlewares) - 2; i >= 0; i-- {
-			wrapped = middlewares[i](wrapped)
+		retry := middlewares[n](func(ctx context.Context, request any) (any, error) {
+			return nil, nil
+		})
+		for i := n - 1; i >= 0; i-- {
+			retry = middlewares[i](retry)
 		}
 		bg := hantu.Singleton(hantu.Option{
 			Max: 50,
 		})
-		workerName := fmt.Sprintf("%s:%p", id, &wrapped)
+		workerName := fmt.Sprintf("%s:%p", id, &next)
 		bg.Worker().Register(workerName, func(ctx context.Context, request any) {
 			job, ok := request.(map[string]any)
 			if !ok {
@@ -38,7 +44,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 				retryContext = icontext.New(ctx)
 			}
 			attempt := job["attempt"].(int)
-			_, err := wrapped(retryContext, job["request"])
+			_, err := retry(retryContext, job["request"])
 			if err != nil && shouldRetry(err, onErrorMessage) && attempt < numberOfRetries {
 				attempt := job["attempt"].(int)
 				current := job["timestamp"].(time.Time)
@@ -59,7 +65,7 @@ func Middleware(id string, numberOfRetries int, waitTime time.Duration, onErrorM
 			} else {
 				ictx = icontext.New(ctx)
 			}
-			response, err := wrapped(ictx, request)
+			response, err := next(ictx, request)
 			if err != nil && shouldRetry(err, onErrorMessage) && numberOfRetries > 0 {
 				ts := time.Now()
 				bg.Queue(schema.Job{
