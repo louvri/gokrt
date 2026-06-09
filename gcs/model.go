@@ -32,7 +32,6 @@ func New(bucket, name string, credential string, kind FileType) (connection.Conn
 		return nil, errors.New("driver_gcs_middleware: credential is required")
 	}
 	var opts []option.ClientOption
-	// credential = strings.Replace(credential, "\n", "\\n", -1)
 	_, err := os.Stat(credential)
 	if err != nil {
 		opts = append(opts, option.WithCredentialsJSON([]byte(credential)))
